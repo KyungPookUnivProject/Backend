@@ -1,13 +1,16 @@
 package com.example.reflix.web.domain;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 
 import javax.persistence.*;
 
 @Entity
 @Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class contents extends baseTimeEntity{
 
     @Id
@@ -33,7 +36,7 @@ public class contents extends baseTimeEntity{
     private String year;
 
     @Column(nullable = false)
-    private String like;
+    private String likelist;
 
     //keyword의 경우 다중값 처리를 해야되는데
     //컬럼하나에 여러 값이 들어가면 rds의 장점이 없어진다.

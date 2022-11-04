@@ -10,10 +10,7 @@ import org.json.simple.JSONObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.Id;
 import java.security.Principal;
@@ -35,10 +32,13 @@ public class contentsController {
 
     //취향선택 후 취향분석을 위해 서버로 취향을 submit한다. 방식은 get일수도 post일수도 있다.
     @ApiOperation(value = "콘텐츠취향을 분석하기",notes = "콘텐츠 취향분석")
-    @PostMapping("/contents/수집")
+    @PostMapping("/contents/submit")
     public ResponseEntity contentSubmit(@RequestBody contentFavoriteRequestDto contentFavoriteDto){
+        log.info("obString");
         JSONObject ob = contentsservice.submit(contentFavoriteDto);//사용자식별아이디 추가해야됨
         if(ob !=null){
+            String obString=ob.toString();
+            log.info(obString);
             return new ResponseEntity(ob.toString(), HttpStatus.OK);
         }
         else{
@@ -62,7 +62,8 @@ public class contentsController {
     //크롤링되어 나온 리뷰영상 누를경우 유튜브리뷰영상이 링크에 내장되게됨 ajax를통해 전체화면 을 바꾸지않고 영상만 나오게하면 좋다
     //또한 누를경우 해당회원이 시청한 영상디비에 저장됨
     @GetMapping("/contents/review/{number}")
-    public void reviewlook(Long number){
+    public void reviewlook(@PathVariable Long number){
+        log.info(number);
         contentsservice.reviewStartSubmit(number);
         //해당 클릭된 리뷰영상의 넘버(id)를 받아온다.
         //넘버를 내가 시청한 리스트에 저장후
@@ -71,6 +72,10 @@ public class contentsController {
 
     }
 
+    @GetMapping("/hi")
+    public String hi(){
+        return "hi";
+    }
     @Scheduled(cron = "0 0 23 * * *", zone = "Asia/Seoul")
     public ResponseEntity movieUpdate(){
         //매일 23시마다 크롤링하여 영화정보들이 업데이트된다.

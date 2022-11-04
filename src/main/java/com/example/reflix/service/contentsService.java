@@ -25,7 +25,6 @@ import java.util.*;
 @Log4j2
 public class contentsService {
 
-    private final contentFavoriteRequestDto contentFavoriteDto;
     private final user1Repository user1Repository;
     private final contentsRepository contentsRepository;
 
@@ -37,13 +36,15 @@ public class contentsService {
         JSONObject object = null;
         ProcessBuilder builder = new ProcessBuilder(command, arg1);
 
+        String a= contentFavoriteDto.toString();
+        log.info(a);
         Long Id=1L;
         Optional<user1> Ouser = user1Repository.findById(Id);
         if(!Ouser.isPresent()){
             return object;
         }
         user1 user = Ouser.get();
-        user.setLike(contentFavoriteDto.toString());
+        user.setLikelist(contentFavoriteDto.toString());
         user1Repository.save(user);
 
         try{
@@ -137,7 +138,7 @@ public class contentsService {
             }
             ObjectMapper mapper = new ObjectMapper();
             Set<contents> contentsSet = mapper.readValue(sb.toString(), new TypeReference<Set<contents>>() {});
-            contentsRepository.deleteAll();
+            contentsRepository.deleteAllInBatch();
             contentsRepository.saveAll(contentsSet);
             return "sucsess";
         }

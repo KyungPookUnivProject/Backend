@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class userService {
 
-    private final userLoginDto userLoginDto;
     public void login(userLoginDto userLoginDto){
         //dto에서 id pwd 구분해서 만든다음 디비에있는 id와같은지 검사후 같으면
         //비번검사 비번이 인코딩해서 디비에서 인코딩된 비번과 같으면 true리턴

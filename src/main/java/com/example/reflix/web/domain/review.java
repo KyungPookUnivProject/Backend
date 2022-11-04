@@ -1,10 +1,15 @@
 package com.example.reflix.web.domain;
 
-import javax.persistence.Column;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 
+import javax.persistence.*;
+
+@Entity
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class review extends baseTimeEntity{
 
     //콘텐츠 id당 리뷰리스트로 만들어야한다. 복합키사용 즉 객체에선 리스트 사용
