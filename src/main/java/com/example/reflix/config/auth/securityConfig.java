@@ -38,10 +38,10 @@ public class securityConfig extends WebSecurityConfigurerAdapter {
         http.csrf().disable();
         http.httpBasic().disable()
                 .authorizeRequests()
-                .antMatchers("/test").authenticated()
+                .antMatchers("/**").authenticated()
                 .antMatchers("/admin/**").hasRole("ADMIN")
                 .antMatchers("/user/**").hasRole("USER")
-                .antMatchers("/**").permitAll()
+                .antMatchers("/auth/**").permitAll()
                 .and()
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),
                         UsernamePasswordAuthenticationFilter.class); // JwtAuthenticationFilter를 UsernamePasswordAuthenticationFilter 전에 넣는다
