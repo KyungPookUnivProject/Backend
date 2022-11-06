@@ -9,6 +9,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 //import org.springframework.security.config.annotation.SecurityConfigurerAdapter;
 //import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -38,10 +39,12 @@ public class securityConfig extends WebSecurityConfigurerAdapter {
         http.csrf().disable();
         http.httpBasic().disable()
                 .authorizeRequests()
-                .antMatchers("/**").authenticated()
+                .antMatchers("/auth").authenticated()
                 .antMatchers("/admin/**").hasRole("ADMIN")
                 .antMatchers("/user/**").hasRole("USER")
-                .antMatchers("/auth/**").permitAll()
+                .antMatchers("/auth/**","/v3/api-docs",
+                        "/swagger*/**").permitAll()
+                .anyRequest().permitAll()
                 .and()
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),
                         UsernamePasswordAuthenticationFilter.class); // JwtAuthenticationFilter를 UsernamePasswordAuthenticationFilter 전에 넣는다
@@ -66,5 +69,9 @@ public class securityConfig extends WebSecurityConfigurerAdapter {
 ////        http.addFilter(jwt)
     }
 
+    @Bean
+    public BCryptPasswordEncoder encodePassword() {
+        return new BCryptPasswordEncoder();
+    }
 
 }

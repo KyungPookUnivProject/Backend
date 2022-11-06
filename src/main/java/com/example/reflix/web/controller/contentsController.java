@@ -3,6 +3,8 @@ package com.example.reflix.web.controller;
 import com.example.reflix.service.contentsService;
 import com.example.reflix.web.dto.contentFavoriteRequestDto;
 import com.example.reflix.web.dto.filterContentsDto;
+import com.example.reflix.web.dto.result;
+import com.example.reflix.web.dto.reviewResponseDto;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.Id;
 import java.security.Principal;
+import java.util.List;
 import java.util.Objects;
 
 @RestController
@@ -31,7 +34,8 @@ public class contentsController {
     }
 
     //취향선택 후 취향분석을 위해 서버로 취향을 submit한다. 방식은 get일수도 post일수도 있다.
-    @ApiOperation(value = "콘텐츠취향을 분석하기",notes = "콘텐츠 취향분석")
+    @ApiOperation(value = "콘텐츠취향을 분석하기",
+            notes = "콘텐츠 종류, 장르, 키워드, 시간대 json으로 body에 담아서 요청")
     @PostMapping("/contents/submit")
     public ResponseEntity contentSubmit(@RequestBody contentFavoriteRequestDto contentFavoriteDto){
         log.info("obString");
@@ -51,7 +55,8 @@ public class contentsController {
     }
     //content/수집 이후 response status가 200일 경우 redirect되는 url이다.
     //필터린된 영화데이터를 보내준다.
-    @ApiOperation(value = "필요한 x,y좌표, title을 해당위치 정보 db에 저장",notes = "왜만들엇지")
+    @ApiOperation(value = "필요한 x,y좌표, title을 해당위치 정보 db에 저장",
+            notes = "필터링된 영화목록들 표시 ")
     @PostMapping("/contents/필터링된영화 표시(추천)")
     public void contentlook(@RequestBody filterContentsDto filterContentsDto){
         //그대로 리턴
@@ -61,21 +66,18 @@ public class contentsController {
     }
     //크롤링되어 나온 리뷰영상 누를경우 유튜브리뷰영상이 링크에 내장되게됨 ajax를통해 전체화면 을 바꾸지않고 영상만 나오게하면 좋다
     //또한 누를경우 해당회원이 시청한 영상디비에 저장됨
-    @GetMapping("/contents/review/{number}")
-    public void reviewlook(@PathVariable Long number){
-        log.info(number);
-        contentsservice.reviewStartSubmit(number);
-        //해당 클릭된 리뷰영상의 넘버(id)를 받아온다.
+
+    @GetMapping("/contents/review/{contentName}")
+    public result reviewlook(@PathVariable String contentName){
+        log.info(contentName);
+        List<reviewResponseDto> allReview = contentsservice.reviewStartSubmit(contentName);
+        return new result(allReview);
+        //해당 클릭된 리뷰영상의 를 받아온다.
         //넘버를 내가 시청한 리스트에 저장후
         //유튜브영상재생 재생은 프론드 단계에서
         // 리스트저장은 백단계에서
-
     }
 
-    @GetMapping("/hi")
-    public String hi(){
-        return "hi";
-    }
     @Scheduled(cron = "0 0 23 * * *", zone = "Asia/Seoul")
     public ResponseEntity movieUpdate(){
         //매일 23시마다 크롤링하여 영화정보들이 업데이트된다.

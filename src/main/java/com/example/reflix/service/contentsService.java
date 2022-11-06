@@ -1,10 +1,8 @@
 package com.example.reflix.service;
 
-import com.example.reflix.web.domain.contents;
-import com.example.reflix.web.domain.contentsRepository;
-import com.example.reflix.web.domain.user1;
-import com.example.reflix.web.domain.user1Repository;
+import com.example.reflix.web.domain.*;
 import com.example.reflix.web.dto.contentFavoriteRequestDto;
+import com.example.reflix.web.dto.reviewResponseDto;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +17,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,8 +26,7 @@ public class contentsService {
 
     private final user1Repository user1Repository;
     private final contentsRepository contentsRepository;
-
-
+    private final reviewRepository reviewRepository;
     public JSONObject submit(contentFavoriteRequestDto contentFavoriteDto){
         String command = "python hello.py";
         String arg1 = "/Users/gimjingwon/PycharmProjects/pythonProject1/hello.py"; // 인
@@ -74,10 +72,31 @@ public class contentsService {
     }
 
     @Transactional
-    public void reviewStartSubmit(Long number){
+    public List<reviewResponseDto> reviewStartSubmit(String contentName){
+
+        //for문을 사용해 entity -> dto로 바꾸는 방법.
+        /*
+        List<review> reviewList = reviewRepository.findByContentName(contentName);
+
+        List<reviewResponseDto>  reviewResponseDtoList = new ArrayList<>();
+
+        for(review review : reviewList){
+            reviewResponseDto dto = reviewResponseDto.builder()
+                    .contentName(review.getContentName())
+                    .reviewUrl(review.getReviewUrl())
+                    .reviewImage(review.getReviewImage())
+                    .view(review.getView())
+                    .build();
+            reviewResponseDtoList.add(dto);
+        }
+        return reviewResponseDtoList;
+ */
+        //stream을 사용해 entity -> dto로 바꾸는 방법
+        return reviewRepository.findByContentName(contentName).stream()
+                .map(m -> new reviewResponseDto(m.getContentName(),m.getReviewUrl(),m.getReviewImage(),m.getView()))
+                .collect(Collectors.toList());
         //user1Repository.savenumber(number)
         //db다시 제대로 만들어서 시청한영상에 저장
-        //
     }
 
     public String movieCrowling() {
