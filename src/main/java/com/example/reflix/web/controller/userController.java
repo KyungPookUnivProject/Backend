@@ -6,6 +6,7 @@ import com.example.reflix.service.userService;
 import com.example.reflix.web.domain.Role;
 import com.example.reflix.web.domain.user1;
 import com.example.reflix.web.domain.user1Repository;
+import com.example.reflix.web.dto.userDetailResponseDto;
 import com.example.reflix.web.dto.userLoginDto;
 import com.example.reflix.web.dto.userRegisterDto;
 import lombok.RequiredArgsConstructor;
@@ -19,8 +20,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Collections;
-import java.util.Map;
 @Log4j2
 @RestController
 @RequiredArgsConstructor
@@ -30,7 +29,7 @@ public class userController {
     private final user1Repository user1Repository;
     private final JwtTokenProvider jwtTokenProvider;
     ///로그인 테스트 코드 ///
-    /*
+
     @PostMapping("/join")
     public String join(){
         user1 user = user1.builder()
@@ -38,11 +37,11 @@ public class userController {
                 .name("jingwon")
                 .password("hi")
                 .Role(Role.USER)
-                .likelist("영화").build();
+                .build();
         user1Repository.save(user);
         return user.getEmail();
     }
-    */
+
     ///로그인 테스트코드///
     //로그인 아이디 비번 보내고 검증하는단계 추후 소셜로그인으로 변경or추가
     @PostMapping("/auth/login")
@@ -52,6 +51,7 @@ public class userController {
         log.info(userLoginDto.getEmail());
         String token = userservice.login(userLoginDto);
 
+        log.info(token);
         if(token==null){
             return new ResponseEntity(HttpStatus.UNAUTHORIZED);
         }
@@ -80,19 +80,24 @@ public class userController {
         String responseEmail= userservice.register(userRegisterDto);
         if(responseEmail.equals("overlap")){
             String body = "중복된 이메일이 있습니다.";
-            return new ResponseEntity(body,HttpStatus.OK);
+            return new ResponseEntity(body,HttpStatus.BAD_REQUEST);
         }
         else{
             return new ResponseEntity(responseEmail,HttpStatus.OK);
         }
     }
 
+    @GetMapping("/user/detail/{email}")
+    public ResponseEntity userDetail(String email){
+
+        userDetailResponseDto dto = userservice.userDetail(email);
+        return new ResponseEntity(dto,HttpStatus.OK);
+    }
     //로그아웃 어떻게 구현해야되는지 모르겟다. 진짜로 시큐리티 사용해야될거같은데
     @GetMapping("/logout")
     public ResponseEntity<Void> logout(){
 
         return new ResponseEntity("hi", HttpStatus.CREATED);
-
     }
     @GetMapping("/test")
     public String test(){
