@@ -10,6 +10,7 @@ import springfox.documentation.spring.web.json.Json;
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Entity
@@ -35,7 +36,16 @@ public class user1 implements UserDetails {
     private String name;
 
     @Column
-    private String likelist;
+    private String likejangrelist;
+
+    @Column
+    private String likeContentlist;
+
+//    @Column
+//    private String lookReivewlist;
+
+//    @OneToMany(mappedBy = "user1")
+//    private List<reviewLookList> userReviewList =  new ArrayList<>();
 
     @Column
     private Role Role;
