@@ -12,21 +12,38 @@ import javax.persistence.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class reviewLookList {
+public class reviewLookList extends baseTimeEntity{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long Id;
 
+    @Column(nullable = false)
+    private String contentsname;
+
+    @Column(nullable = false)
+    private String reviewname;
+
+    @Column(nullable = false)
+    private String contentsImageUrl;
+
+    @Column(nullable = false)
+    private String reviewImageUrl;
+
+    @Column(nullable = false)
+    private String reviewVideoUrl;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user1_id")
-    private user1 user;
+    @JoinColumn(name = "contentsId", insertable = false, updatable = false)
+    private contents contents;
 
-    @Column
-    private String imageUrl;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reviewId", insertable = false, updatable = false)
+    private review review;
 
-    @Column
-    private String videoUrl;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "userId")
+    private user user;
 //
 //    public void setMember(user1 member) {
 //        this.user = member;

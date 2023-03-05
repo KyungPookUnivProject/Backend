@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Builder
@@ -18,19 +20,25 @@ public class review extends baseTimeEntity{
     //
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long Id;
 
-    @Column
-    private Long contentName;
+    @Column(nullable = false)
+    private String contentName;
 
-    @Column
-    private String reviewUrl;
+    @Column(nullable = false)
+    private String reviewvideoUrl;
 
-    @Column
-    private String reviewImage;
+    @Column(nullable = false)
+    private String reviewImageurl;
 
-    @Column
+    @Column(nullable = false)
     private Long view;//조회수
 
+    @OneToMany(mappedBy = "review")
+    private List<reviewLookList> lookList = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "contentsId", insertable = false, updatable = false)
+    private contents contents;
 
 }

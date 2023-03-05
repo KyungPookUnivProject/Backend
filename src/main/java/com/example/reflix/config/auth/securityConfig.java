@@ -39,34 +39,15 @@ public class securityConfig extends WebSecurityConfigurerAdapter {
         http.csrf().disable();
         http.httpBasic().disable()
                 .authorizeRequests()
-                .antMatchers("/auth").authenticated()
                 .antMatchers("/admin/**").hasRole("ADMIN")
                 .antMatchers("/user/**").hasRole("USER")
                 .antMatchers("/auth/**","/v3/api-docs",
                         "/swagger*/**").permitAll()
-                .anyRequest().permitAll()
+                .anyRequest().authenticated()
                 .and()
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),
                         UsernamePasswordAuthenticationFilter.class); // JwtAuthenticationFilter를 UsernamePasswordAuthenticationFilter 전에 넣는다
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-
-
-//        http.authorizeRequests()
-//                .antMatchers("/auth/**","/css").permitAll()
-//                .anyRequest().authenticated();
-//
-//
-//        http.httpBasic().disable()
-//                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-//
-//        http.formLogin()
-//                .loginProcessingUrl("/login")
-//                .usernameParameter("Email")
-//                .passwordParameter("password")
-//                .successHandler(customAuthenticationSuccessHandler)
-//                .failureHandler();
-//
-////        http.addFilter(jwt)
     }
 
     @Bean

@@ -1,8 +1,11 @@
 package com.example.reflix.web.domain;
 
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Builder
@@ -13,39 +16,42 @@ import javax.persistence.*;
 public class contents extends baseTimeEntity{
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long Id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long contentsId;
 
     @Column(nullable = false)
     private String contentName;
 
     @Column(nullable = false)
-    private String image;
+    private String contentImageUrl;
 
-    @Column(nullable = false)
-    private float grade;
+    @Column(nullable = true)
+    private String grade;
 
-    @Column(nullable = false)
-    private String jangre;
-
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String runnigTime;
 
     @Column(nullable = false)
     private String year;
 
     @Column(nullable = false)
-    private Integer likelist;
+    private category contentsCategory;
 
-    //keyword의 경우 다중값 처리를 해야되는데
-    //컬럼하나에 여러 값이 들어가면 rds의 장점이 없어진다.
-    //그러기에 구분자 "|"를 통해 구분한다
-    //구분자 "|"를 사용했다는것을 api문서에 남긴다.
     @Column(nullable = false)
-    private String keyWord;
+    private int likelist;
+
+    @OneToOne(mappedBy = "contents")
+    private contentsJanre janre;
+
+    @OneToMany(mappedBy = "contents")
+    private List<contentsKeword> kewordList = new ArrayList<>();
 
 
+    @OneToMany(mappedBy = "contents")
+    private List<review> reviewList = new ArrayList<>();
 
+    @OneToOne(mappedBy = "contents")
+    private recomendContents rcmContents;
 
 
 

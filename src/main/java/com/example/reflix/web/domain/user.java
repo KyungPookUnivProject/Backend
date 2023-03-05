@@ -20,10 +20,10 @@ import java.util.stream.Collectors;
 @Getter
 @Builder
 //db연결되는 도메인 이름은 추후 변경 예정
-public class user1 implements UserDetails {
+public class user extends baseTimeEntity implements UserDetails {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long Id;
 
     @Column(nullable = false)
@@ -35,11 +35,14 @@ public class user1 implements UserDetails {
     @Column(nullable = false)
     private String name;
 
-    @Column
-    private String likejangrelist;
+    @OneToMany(mappedBy = "user")
+    private List<reviewLookList> looklist = new ArrayList<>();
 
-    @Column
-    private String likeContentlist;
+    @OneToMany(mappedBy = "user")
+    private List<recomendContents> rcmConetnsList = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user")
+    private List<contentLikeList> contentLikeList = new ArrayList<>();
 
 //    @Column
 //    private String lookReivewlist;
