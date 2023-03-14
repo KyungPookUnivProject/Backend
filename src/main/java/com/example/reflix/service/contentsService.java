@@ -1,21 +1,26 @@
 package com.example.reflix.service;
 
+import com.example.reflix.config.auth.userPrinciple;
 import com.example.reflix.web.domain.*;
-import com.example.reflix.web.dto.contentFavoriteRequestDto;
-import com.example.reflix.web.dto.reviewResponseDto;
+import com.example.reflix.web.dto.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.json.simple.JSONArray;
+import org.apache.catalina.mapper.Mapper;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.async.DeferredResult;
 
 import java.io.BufferedReader;
-import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.nio.file.attribute.UserPrincipal;
+import java.security.Principal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -24,81 +29,100 @@ import java.util.stream.Collectors;
 @Log4j2
 public class contentsService {
 
-    private final user1Repository user1Repository;
     private final contentsRepository contentsRepository;
-    private final reviewRepository reviewRepository;
-    public JSONObject submit(contentFavoriteRequestDto contentFavoriteDto){
-        String command = "python hello.py";
-        String arg1 = "/Users/gimjingwon/PycharmProjects/pythonProject1/hello.py"; // 인
+    private final recomendContentsRepository recomendContentsRepository;
+    private final contentLikeListRepository contentLikeListRepository;
 
-        JSONObject object = null;
-        ProcessBuilder builder = new ProcessBuilder(command, arg1);
-
-        String a= contentFavoriteDto.toString();
-        log.info(a);
-        Long Id=1L;
-        Optional<user1> Ouser = user1Repository.findById(Id);
-        if(!Ouser.isPresent()){
-            return object;
-        }
-        user1 user = Ouser.get();
-        user.setLikelist(contentFavoriteDto.toString());
-        user1Repository.save(user);
-
-        try{
-            Process process = builder.start();
-            int exitVal = process.waitFor();  // 자식 프로세스가 종료될 때까지 기다림
-            JSONParser parser = new JSONParser();
-            BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream(), "euc-kr")); // 서브 프로세스가 출력하는 내용을 받기 위해
-            String line;
-            StringBuilder sb= new StringBuilder();
-            while ((line = br.readLine()) != null) {
-                sb.append(line);
-            }
-            object = (JSONObject) parser.parse(sb.toString());
-
-            return object;
-        }
-        catch (Exception e){
-            e.printStackTrace();
-            return object;
-        }
-        //dto에서 분리해서getter를 통해 분리해서 서버에 보낸다
-        //여기서 취향을 통해서 파이썬을 불러와서 리턴받는다 필터링된 영화목록들 그리고 영화목록들의 리뷰영상크롤링해서 리뷰영상 정보까지 리턴받는다.
-        //processbuilder를 통해 파이썬파일 실행
-        // 실행되고 결과값을 bufferReader를 통해 String으로 받아옴
-        //받아온 데이터  contentFavoriteReponseDto형식으로 바뀔수잇게 builder한다.
-        //그리고 http상태코드와 responsedto를 리턴시킨다.
+    //콘텐츠상세조회
+    public contentsDetailResponseDto contentdetail(Long contentId){
+        contentsDetailResponseDto contents = contentsRepository.findByContentsId(contentId);
+        return contents;
     }
 
-    @Transactional
-    public List<reviewResponseDto> reviewStartSubmit(String contentName){
 
-        //for문을 사용해 entity -> dto로 바꾸는 방법.
-        /*
-        List<review> reviewList = reviewRepository.findByContentName(contentName);
+    //파이썬 외부 연동 후 리턴값 String타입으로 리턴
+    public String pythonEexc(String command,String arg1) throws IOException {
+        String line = null;
+        StringBuilder sb= new StringBuilder();
+        ProcessBuilder builder = new ProcessBuilder(command,arg1);
+        builder.redirectErrorStream(true);
+        Process process = builder.start();
+        BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream(), "euc-kr")); // 서브 프로세스가 출력하는 내용을 받기 위해'
+        if(br.readLine()==null){
+            log.info("피이썬에서 리턴값없음");
+        }
+        while ((line = br.readLine()) != null) {
+            sb.append(line);
+            log.info(line);
+        }
+        return sb.toString();
+    }
 
-        List<reviewResponseDto>  reviewResponseDtoList = new ArrayList<>();
-
-        for(review review : reviewList){
-            reviewResponseDto dto = reviewResponseDto.builder()
-                    .contentName(review.getContentName())
-                    .reviewUrl(review.getReviewUrl())
-                    .reviewImage(review.getReviewImage())
-                    .view(review.getView())
+    //추천되는 콘텐츠들을 유저별로 추천콘텐츠목록에 저장
+    public void recomendContentsSave(List<contents> contentsList,Long userId,List<similarContentDto> list){
+        List<recomendContents> recomendContentsList = new ArrayList<>();
+        for(contents contents : contentsList){
+            recomendContents recomendContents1 = recomendContents.builder()
+                    .contentsCategory(contents.getContentsCategory())
+                    .contentsName(contents.getContentName())
+                    .similarity(list.get(contents.getIntId()).getSimilarity())
+                    .contentsId(contents.getContentsId())
+                    .userId(userId)
                     .build();
-            reviewResponseDtoList.add(dto);
+
+            recomendContentsList.add(recomendContents1);
         }
-        return reviewResponseDtoList;
- */
-        //stream을 사용해 entity -> dto로 바꾸는 방법
-        return reviewRepository.findByContentName(contentName).stream()
-                .map(m -> new reviewResponseDto(m.getContentName(),m.getReviewUrl(),m.getReviewImage(),m.getView()))
-                .collect(Collectors.toList());
-        //user1Repository.savenumber(number)
-        //db다시 제대로 만들어서 시청한영상에 저장
+        recomendContentsRepository.saveAll(recomendContentsList);
     }
 
+    //유저에게 취향받아서 분석 후 유사한 콘텐츠 추천
+    //유저별 추천된 콘텐츠 목록 저장
+    @Transactional
+    public List<filterContentsDto> submit(contentFavoriteRequestDto contentFavoriteDto, userPrinciple userPrincipal) throws IOException {
+        String command = "python";
+        String arg1 = "/Users/gimjingwon/PycharmProjects/pythonProject1/json_sample.py";
+        List<contents> contentsList = new ArrayList<>();
+        List<filterContentsDto> collect= new ArrayList<>();
+        String contentString = pythonEexc(command,arg1);
+        log.info("response contnetslist data = "+contentString);
+        if(!contentString.isEmpty()){
+            ObjectMapper mapper = new ObjectMapper();
+            List<Long> idlist = new ArrayList<>();
+            contentString="{\n"+contentString;
+            List<similarContentDto> list = Arrays.asList(mapper.readValue(contentString, similarContentDto.class));
+            for( similarContentDto dto : list){
+                idlist.add(dto.getContentid());
+            }
+            contentsList = contentsRepository.findAllById(idlist);
+            collect = contentsList.stream()
+                    .map(m-> new filterContentsDto(m.getContentsId(),m.getContentName(),m.getContentImageUrl(),m.getKewordList()))
+                    .collect(Collectors.toList());
+            for(int i=0;i<collect.size();i++){
+                collect.get(i).setSimir(list.get(i).getSimilarity());
+            }
+
+            recomendContentsSave(contentsList, userPrincipal.getId(), list);
+            return collect;
+        }
+        else{
+            return collect;
+        }
+    }
+
+
+    public void contentLike(Long contentId, Long userId){
+//        Optional<user> user = user1Repository.findByEmail(email);
+        contentLikeList list = contentLikeList.builder()
+                .userId(userId)
+                .contentId(contentId)
+                .build();
+
+        contentLikeListRepository.save(list);
+        Optional<contents> contents = contentsRepository.findById(contentId);
+        contents savecontent = contents.get();
+        savecontent.setLikelist(savecontent.getLikelist()+1);
+        contentsRepository.save(savecontent);
+    }
     public String movieCrowling() {
         String command = "python hello.py";
         String arg1 = "/Users/gimjingwon/PycharmProjects/pythonProject1/hello.py"; //
@@ -166,7 +190,6 @@ public class contentsService {
             log.info(e.getMessage().toString());
             return "error : "+ e.getMessage().toString();
         }
-
 
     }
 }

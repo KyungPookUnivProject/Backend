@@ -26,4 +26,9 @@ public class contentLikeList extends baseTimeEntity{
     @JoinColumn(name = "userId")
     private user user;
 
+
+    @Column(name = "contentsId", insertable = false,updatable = false)
+    private Long contentId;
+    @Column(name = "userId",insertable = false,updatable = false)
+    private Long userId;
 }

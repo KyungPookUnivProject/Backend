@@ -41,4 +41,7 @@ public class review extends baseTimeEntity{
     @JoinColumn(name = "contentsId", insertable = false, updatable = false)
     private contents contents;
 
+    @Column(name = "contentsId")
+    private Long contentId;
+
 }

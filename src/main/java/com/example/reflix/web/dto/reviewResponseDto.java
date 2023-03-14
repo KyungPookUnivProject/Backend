@@ -11,12 +11,16 @@ import javax.persistence.Column;
 @AllArgsConstructor
 public class reviewResponseDto {
 
-    private Long contentName;
+    private Long reivewId;
 
-    private String reviewUrl;
+    private Long contentId;
 
-    private String reviewImage;
+    private String contentName;
 
-    private Long view;
+    private String reviewvideoUrl;
+
+    private String reviewImageurl;
+
+    private Long view;//조회수
 
 }

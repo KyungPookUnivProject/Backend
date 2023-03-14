@@ -21,17 +21,23 @@ public class recomendContents extends baseTimeEntity{
     private String contentsName;
 
     @Column(nullable = false)
-    private String contentsCategory;
+    private category contentsCategory;
 
     @Column(nullable = false)
     @ColumnDefault("0")
     private long similarity;
 
     @OneToOne
-    @JoinColumn(name = "contentsId")
+    @JoinColumn(name = "contentsId", insertable = false, updatable = false)
     private contents contents;
 
     @ManyToOne
-    @JoinColumn(name = "userId")
+    @JoinColumn(name = "userId", insertable = false, updatable = false)
     private user user;
+
+    @Column(name = "contentsId")
+    private Long contentsId;
+
+    @Column(name = "userId")
+    private Long userId;
 }
