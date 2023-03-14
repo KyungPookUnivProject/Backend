@@ -21,6 +21,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class securityConfig extends WebSecurityConfigurerAdapter {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final jwtAccessDeniedHandler jwtAccessDeniedHandler;
 
     @Bean
     @Override
@@ -43,11 +44,18 @@ public class securityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/user/**").hasRole("USER")
                 .antMatchers("/auth/**","/v3/api-docs",
                         "/swagger*/**").permitAll()
-                .anyRequest().authenticated()
-                .and()
-                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),
-                        UsernamePasswordAuthenticationFilter.class); // JwtAuthenticationFilter를 UsernamePasswordAuthenticationFilter 전에 넣는다
+                .antMatchers("/contents/submit").permitAll()
+                .anyRequest().authenticated();
+//                .and();
+//                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),
+//                        UsernamePasswordAuthenticationFilter.class); // JwtAuthenticationFilter를 UsernamePasswordAuthenticationFilter 전에 넣는다
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+
+        http.exceptionHandling()
+                .accessDeniedHandler(jwtAccessDeniedHandler);
+        http.apply(new jwtTokenFilterConfigurer(jwtTokenProvider));
+
+
     }
 
     @Bean

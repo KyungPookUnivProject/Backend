@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 @Getter
 @Builder
 //db연결되는 도메인 이름은 추후 변경 예정
-public class user extends baseTimeEntity implements UserDetails {
+public class user extends baseTimeEntity implements UserDetails{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -43,12 +43,6 @@ public class user extends baseTimeEntity implements UserDetails {
 
     @OneToMany(mappedBy = "user")
     private List<contentLikeList> contentLikeList = new ArrayList<>();
-
-//    @Column
-//    private String lookReivewlist;
-
-//    @OneToMany(mappedBy = "user1")
-//    private List<reviewLookList> userReviewList =  new ArrayList<>();
 
     @Column
     private Role Role;
