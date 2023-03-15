@@ -1,58 +1,69 @@
 package com.example.reflix.service;
 
+import com.example.reflix.config.auth.CustomUserDetailService;
 import com.example.reflix.config.auth.JwtTokenProvider;
 import com.example.reflix.web.domain.Role;
 import com.example.reflix.web.domain.user;
 import com.example.reflix.web.domain.user1Repository;
+import com.example.reflix.web.dto.siginInResponseDto;
 import com.example.reflix.web.dto.userDetailResponseDto;
 import com.example.reflix.web.dto.userLoginDto;
 import com.example.reflix.web.dto.userRegisterDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
 @Service
+@Log4j2
 @RequiredArgsConstructor
 public class userService {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final user1Repository user1Repository;
-    public String login(userLoginDto userLoginDto){
+    private final CustomUserDetailService customUserDetailService;
 
-//        user member = user1Repository.findByEmail(userLoginDto.getEmail())
-//                .orElseThrow(() -> new IllegalArgumentException("노가입"));
-//
-//
-//        String hashPW=bCryptPasswordEncoder.encode(userLoginDto.getPassword());
-//
-//        if(hashPW.equals(member.getPassword())){
-//            return jwtTokenProvider.createToken(member.getEmail(),member.getRole());
-//        }
-//        else{
-//            return null;
-//        }
-        //dto에서 id pwd 구분해서 만든다음 디비에있는 id와같은지 검사후 같으면
-        //비번검사 비번이 인코딩해서 디비에서 인코딩된 비번과 같으면 true리턴
-        return null;
+    public siginInResponseDto login(userLoginDto userLoginDto){
+
+        UserDetails userDetails = customUserDetailService.loadUserByUsername(userLoginDto.getEmail());
+
+        String hashPW=bCryptPasswordEncoder.encode(userLoginDto.getPassword());
+
+        if(hashPW.equals(userDetails.getPassword())){
+            throw new BadCredentialsException(userDetails.getUsername() + "password error");
+        }
+        Authentication authentication =  new UsernamePasswordAuthenticationToken(
+                userDetails.getUsername(), userDetails.getPassword(), userDetails.getAuthorities());
+
+        log.info("signIn service | authentication.getName : {}, authentication.getCredentials() : {}",
+                authentication.getName(), authentication.getCredentials());
+
+        return new siginInResponseDto(
+                "Bearer-"+jwtTokenProvider.createAccessToken(authentication),
+                "Bearer-"+jwtTokenProvider.issueRefreshToken(authentication));
     }
 
     public String register(userRegisterDto userRegisterDto){
-        String hashPW=bCryptPasswordEncoder.encode(userRegisterDto.getPassword());
-        user member = user.builder()
-                .name(userRegisterDto.getName())
-                .password(hashPW)
-                .email(userRegisterDto.getEmail())
-                .Role(Role.USER)
-                .build();
         if(user1Repository.findByEmail(userRegisterDto.getEmail()).isPresent()){
-            return "overlap";
+            log.info("이메일 중복으로 회원가입 실패"+userRegisterDto.getEmail());
+            return "이메일 중복으로 회원가입 실패"+ userRegisterDto.getEmail();
         }
         else{
+            String hashPW=bCryptPasswordEncoder.encode(userRegisterDto.getPassword());
+            user member = user.builder()
+                    .name(userRegisterDto.getName())
+                    .password(hashPW)
+                    .email(userRegisterDto.getEmail())
+                    .Role(Role.USER)
+                    .build();
             return user1Repository.save(member).getEmail().toString();
         }
-
         //유저 회원가입
         //dto에서 이메일,아이디,비번 이름을 받는다
         //디비에서 이메일이 겹치는지 확인

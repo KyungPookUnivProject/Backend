@@ -6,6 +6,7 @@ import com.example.reflix.service.userService;
 import com.example.reflix.web.domain.Role;
 import com.example.reflix.web.domain.user;
 import com.example.reflix.web.domain.user1Repository;
+import com.example.reflix.web.dto.siginInResponseDto;
 import com.example.reflix.web.dto.userDetailResponseDto;
 import com.example.reflix.web.dto.userLoginDto;
 import com.example.reflix.web.dto.userRegisterDto;
@@ -49,29 +50,12 @@ public class userController {
     ///로그인 테스트코드///
     //로그인 아이디 비번 보내고 검증하는단계 추후 소셜로그인으로 변경or추가
     @PostMapping("/auth/login")
-    public ResponseEntity login(@RequestBody userLoginDto userLoginDto){
-
+    public siginInResponseDto login(@RequestBody userLoginDto userLoginDto){
 
         log.info(userLoginDto.getEmail());
-        String token = userservice.login(userLoginDto);
-
+        siginInResponseDto token = userservice.login(userLoginDto);
         log.info(token);
-        if(token==null){
-            return new ResponseEntity(HttpStatus.UNAUTHORIZED);
-        }
-        else{
-            HttpHeaders responseHeaders = new HttpHeaders();
-            responseHeaders.set("Authorization",token);
-            return new ResponseEntity(token,responseHeaders,HttpStatus.OK);
-        }
-
-        //로그인 후 이유저가 취향 디비가 있는지검사
-        //잇으면 content/표시로 redirect
-        //없으면 프론트단에서 취향고르는 페이지로 redirect하게함
-
-        //여기서는 db에 취향디비가 있는지만 검사해서 있으면 있다고 리턴
-        //없으면 없다고리턴
-        //프론트단에서 리턴결과 확인해서 redirect어디로 할지 결정
+        return token;
     }
 
     //회원가입 회원정보 db에 넣기 추후 소셜로그인 대비해서 유저이메일 받기 이메일을 유니크키로 쓰자. 기본키는 고유번호다.
