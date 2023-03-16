@@ -2,6 +2,7 @@ package com.example.reflix.service;
 
 import com.example.reflix.config.auth.CustomUserDetailService;
 import com.example.reflix.config.auth.JwtTokenProvider;
+import com.example.reflix.config.auth.userPrinciple;
 import com.example.reflix.web.domain.Role;
 import com.example.reflix.web.domain.user;
 import com.example.reflix.web.domain.user1Repository;
@@ -18,6 +19,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.attribute.UserPrincipal;
 import java.util.Optional;
 
 @Service
@@ -71,17 +73,25 @@ public class userService {
         //잘되면 됐다고 리턴 오류나면 왜오류인지 리턴
     }
 
-    public userDetailResponseDto userDetail(String email){
-        Optional<user> Optionaluser = user1Repository.findByEmail(email);
-        user user = Optionaluser.orElseThrow(UnsupportedOperationException::new);
+    public userDetailResponseDto userDetail(userPrinciple user){
         userDetailResponseDto resposnedto = userDetailResponseDto.builder()
-                .email(user.getEmail())
-                .name(user.getName())
+                .email(user.getMember().getEmail())
+                .name(user.getMember().getName())
                 .build();
         return resposnedto;
     }
 
-    public void mypage(String email){
+    public int out(String email,String password,userPrinciple user){
+        String hashPW=bCryptPasswordEncoder.encode(password);
+
+        if(email.equals(user.getUsername()) && hashPW.equals(user.getPassword())){
+            user1Repository.deleteById(user.getId());
+            return 1;
+        }
+        else{
+            return 0;
+        }
+
 
     }
 }

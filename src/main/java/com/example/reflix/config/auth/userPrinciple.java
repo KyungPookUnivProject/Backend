@@ -1,13 +1,14 @@
 package com.example.reflix.config.auth;
 
 import com.example.reflix.web.domain.user;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.ArrayList;
 import java.util.Collection;
-
+@Getter
 @RequiredArgsConstructor
 public class userPrinciple implements UserDetails {
     private final user member;

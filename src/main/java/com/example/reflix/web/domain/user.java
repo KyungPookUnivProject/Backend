@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 @Setter
 @Getter
 @Builder
+@Table(name = "user1")
 //db연결되는 도메인 이름은 추후 변경 예정
 public class user extends baseTimeEntity implements UserDetails{
 
