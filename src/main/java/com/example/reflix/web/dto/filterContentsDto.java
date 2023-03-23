@@ -25,6 +25,9 @@ public class filterContentsDto {
     @OneToMany(mappedBy = "contents")
     private List<contentsKeword> kewordList = new ArrayList<>();
 
-    public filterContentsDto(Long contentsId, String contentName, String contentImageUrl, List<contentsKeword> kewordList) {
+    public filterContentsDto(Long contentsId, int simir) {
+    }
+
+    public filterContentsDto(contents contents) {
     }
 }

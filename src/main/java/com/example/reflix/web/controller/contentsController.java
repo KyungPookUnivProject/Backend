@@ -2,9 +2,11 @@ package com.example.reflix.web.controller;
 
 import com.example.reflix.config.auth.userPrinciple;
 import com.example.reflix.service.contentsService;
+import com.example.reflix.service.reviewService;
 import com.example.reflix.service.userService;
 import com.example.reflix.service.youtubeServiceImpl;
 import com.example.reflix.web.domain.contents;
+import com.example.reflix.web.domain.user;
 import com.example.reflix.web.dto.*;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -31,14 +33,16 @@ public class contentsController {
 
     private final contentsService contentsservice;
     private final youtubeServiceImpl youtubeService;
+    private final reviewService reviewService;
 
     @ApiOperation(value = "콘텐츠취향을 분석하기",
             notes = "콘텐츠 종류, 장르, 키워드, 시간대 json으로 body에 담아서 요청," +
                     "영화 목록을 responsebody에 json으로 응답")
     @PostMapping("/contents/submit")
-    public ResponseEntity contentSubmit(@RequestBody contentFavoriteRequestDto contentFavoriteDto, @AuthenticationPrincipal userPrinciple userPrinciple) throws IOException, InterruptedException {
+    public ResponseEntity contentSubmit(@RequestBody contentFavoriteRequestDto contentFavoriteDto, @AuthenticationPrincipal user user) throws IOException, InterruptedException {
         log.info("obString");
-        List<filterContentsDto> contentsList = contentsservice.submit(contentFavoriteDto,userPrinciple);//사용자식별아이디 추가해야됨
+        log.info(user.getAuthorities());
+        List<filterContentsDto> contentsList = contentsservice.submit(contentFavoriteDto,user);//사용자식별아이디 추가해야됨
         if(contentsList.isEmpty()){
             String errMsg = "NO data";
             log.error(errMsg);
@@ -73,9 +77,12 @@ public class contentsController {
             notes = "해당영화의 이름을 url에 담아서 요청," +
                     "해당영화의 리뷰목록을 json으로 응답")
     @GetMapping("/contents/review")
-    public ResponseEntity reviewlook(@RequestParam Long contentId){
+    public ResponseEntity reviewlook(@RequestParam Long contentId,String contentname){
         log.info(contentId);
-        List<reviewResponseDto> allReview = youtubeService.reviewStartSubmit(contentId);
+        List<reviewResponseDto> allReview = reviewService.reviewrecomend(contentname);
+        if(allReview.isEmpty()){
+            allReview = youtubeService.reviewStartSubmit(contentname,contentId);
+        }
         if(allReview.isEmpty()){
             String errMsg= "No data";
             log.error("contentsController : reviewlook : "+errMsg);
@@ -98,8 +105,13 @@ public class contentsController {
             notes = "콘텐츠 id와 유저 email을 바디에 담아서 요청받음" +
                     "콘텐츠테이블에 좋아요횟수 업데이트")
     @PostMapping("/content/like")
-    public void contentLike(@RequestBody Long contentId, @AuthenticationPrincipal userPrinciple userPrinciple){
-        contentsservice.contentLike(contentId,userPrinciple.getId());
+    public ResponseEntity contentLike(@RequestBody Long contentId, @AuthenticationPrincipal userPrinciple userPrinciple){
+        if(contentsservice.contentLike(contentId,userPrinciple.getId())){
+            return new ResponseEntity<>(true,HttpStatus.OK);
+        }
+        else{
+            return new ResponseEntity<>(false,HttpStatus.NO_CONTENT);
+        }
     }
 
     @Scheduled(cron = "0 0 23 * * *", zone = "Asia/Seoul")

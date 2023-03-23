@@ -36,10 +36,13 @@ public class userService {
         UserDetails userDetails = customUserDetailService.loadUserByUsername(userLoginDto.getEmail());
 
         String hashPW=bCryptPasswordEncoder.encode(userLoginDto.getPassword());
+        log.info("hashPW : " + hashPW + " userdetail"+ userDetails.getPassword());
 
         if(hashPW.equals(userDetails.getPassword())){
+            log.info("비번에러");
             throw new BadCredentialsException(userDetails.getUsername() + "password error");
         }
+        log.info("며기부터안됨 authin");
         Authentication authentication =  new UsernamePasswordAuthenticationToken(
                 userDetails.getUsername(), userDetails.getPassword(), userDetails.getAuthorities());
 

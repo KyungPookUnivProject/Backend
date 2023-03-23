@@ -7,20 +7,13 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.apache.catalina.mapper.Mapper;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.context.request.async.DeferredResult;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
-import java.nio.file.attribute.UserPrincipal;
-import java.security.Principal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -35,8 +28,17 @@ public class contentsService {
 
     //콘텐츠상세조회
     public contentsDetailResponseDto contentdetail(Long contentId){
-        contentsDetailResponseDto contents = contentsRepository.findByContentsId(contentId);
-        return contents;
+        contents contents = contentsRepository.findByContentsId(contentId);
+        contentsDetailResponseDto resultdto = contentsDetailResponseDto.builder()
+                .contentImageUrl(contents.getContentImageUrl())
+                .contentName(contents.getContentName())
+                .contentsId(contents.getContentsId())
+                .contentsCategory(contents.getContentsCategory())
+                .year(contents.getYear())
+                .grade(contents.getGrade())
+                .janre(null)
+                .build();
+        return resultdto;
     }
 
 
@@ -44,7 +46,13 @@ public class contentsService {
     public String pythonEexc(String command,String arg1) throws IOException {
         String line = null;
         StringBuilder sb= new StringBuilder();
-        ProcessBuilder builder = new ProcessBuilder(command,arg1);
+        ProcessBuilder builder = new ProcessBuilder();
+//        builder.directory(new File(HomeDe))
+        builder.command("python3","/Users/gimjingwon/PycharmProjects/pythonProject1/json_sample.py");
+//        bu
+
+//        ProcessBuilder builder = new ProcessBuilder(arg1,command);
+
         builder.redirectErrorStream(true);
         Process process = builder.start();
         BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream(), "euc-kr")); // 서브 프로세스가 출력하는 내용을 받기 위해'
@@ -59,27 +67,29 @@ public class contentsService {
     }
 
     //추천되는 콘텐츠들을 유저별로 추천콘텐츠목록에 저장
+    @Transactional
     public void recomendContentsSave(List<contents> contentsList,Long userId,List<similarContentDto> list){
         List<recomendContents> recomendContentsList = new ArrayList<>();
+        int count =0;
         for(contents contents : contentsList){
             recomendContents recomendContents1 = recomendContents.builder()
                     .contentsCategory(contents.getContentsCategory())
                     .contentsName(contents.getContentName())
-                    .similarity(list.get(contents.getIntId()).getSimilarity())
+                    .similarity(list.get(count++).getSimilarity())
                     .contentsId(contents.getContentsId())
                     .userId(userId)
                     .build();
-
             recomendContentsList.add(recomendContents1);
         }
+        recomendContentsRepository.deleteByUserId(userId);
         recomendContentsRepository.saveAll(recomendContentsList);
     }
 
     //유저에게 취향받아서 분석 후 유사한 콘텐츠 추천
     //유저별 추천된 콘텐츠 목록 저장
     @Transactional
-    public List<filterContentsDto> submit(contentFavoriteRequestDto contentFavoriteDto, userPrinciple userPrincipal) throws IOException {
-        String command = "python";
+    public List<filterContentsDto> submit(contentFavoriteRequestDto contentFavoriteDto, user userPrincipal) throws IOException {
+        String command = "python3 json_sample.py";
         String arg1 = "/Users/gimjingwon/PycharmProjects/pythonProject1/json_sample.py";
         List<contents> contentsList = new ArrayList<>();
         List<filterContentsDto> collect= new ArrayList<>();
@@ -94,13 +104,20 @@ public class contentsService {
                 idlist.add(dto.getContentid());
             }
             contentsList = contentsRepository.findAllById(idlist);
-            collect = contentsList.stream()
-                    .map(m-> new filterContentsDto(m.getContentsId(),m.getContentName(),m.getContentImageUrl(),m.getKewordList()))
-                    .collect(Collectors.toList());
+            log.info(contentsList.get(0).getContentsId());
+            log.info(contentsList.get(0).getContentName());
+            int count =0;
+            for(contents rid : contentsList){
+                filterContentsDto dto = filterContentsDto.builder()
+                        .contentsId(rid.getContentsId())
+                        .contentName(rid.getContentName())
+                        .contentImageUrl(rid.getContentImageUrl())
+                        .build();
+                collect.add(dto);
+            }
             for(int i=0;i<collect.size();i++){
                 collect.get(i).setSimir(list.get(i).getSimilarity());
             }
-
             recomendContentsSave(contentsList, userPrincipal.getId(), list);
             return collect;
         }
@@ -110,37 +127,39 @@ public class contentsService {
     }
 
 
-    public void contentLike(Long contentId, Long userId){
-//        Optional<user> user = user1Repository.findByEmail(email);
-        contentLikeList list = contentLikeList.builder()
-                .userId(userId)
-                .contentId(contentId)
-                .build();
+    public boolean contentLike(Long contentId, Long userId){
+        try{
+            contentLikeList list = contentLikeList.builder()
+                    .userId(userId)
+                    .contentId(contentId)
+                    .build();
 
-        contentLikeListRepository.save(list);
-        Optional<contents> contents = contentsRepository.findById(contentId);
-        contents savecontent = contents.get();
-        savecontent.setLikelist(savecontent.getLikelist()+1);
-        contentsRepository.save(savecontent);
+            contentLikeListRepository.save(list);
+            Optional<contents> contents = contentsRepository.findById(contentId);
+            contents savecontent = contents.get();
+            savecontent.setLikelist(savecontent.getLikelist()+1);
+            contentsRepository.save(savecontent);
+            return true;
+        }catch (Exception e){
+            log.info(e.getMessage());
+        }
+
+        return false;
     }
     public String movieCrowling() {
-        String command = "python hello.py";
+        String command = "python3";
         String arg1 = "/Users/gimjingwon/PycharmProjects/pythonProject1/hello.py"; //
         Process ps=null;
-
-        ProcessBuilder processBuilder = new ProcessBuilder(command,arg1);
-
+        ProcessBuilder Builder = new ProcessBuilder();
+        Builder.command(command,arg1);
         try{
-            ps = processBuilder.start();
-//            JSONParser parser = new JSONParser();
+            ps = Builder.start();
             String line=null;
             StringBuilder sb = new StringBuilder();
             BufferedReader br = new BufferedReader(new InputStreamReader(ps.getInputStream()));
             while((line = br.readLine())==null){
                 sb.append(line);
             }
-//            JSONObject obj = (JSONObject) parser.parse(sb.toString());
-//            JSONArray array;
             ObjectMapper mapper = new ObjectMapper();
             Set<contents> contentsSet = mapper.readValue(sb.toString(), new TypeReference<Set<contents>>() {});
 //            contents content = content.builder()

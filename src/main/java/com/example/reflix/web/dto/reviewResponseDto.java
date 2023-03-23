@@ -3,24 +3,24 @@ package com.example.reflix.web.dto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import javax.persistence.Column;
+import java.math.BigInteger;
 
 @Data
 @Builder
 @AllArgsConstructor
+@NoArgsConstructor
 public class reviewResponseDto {
-
-    private Long reivewId;
-
-    private Long contentId;
-
-    private String contentName;
-
-    private String reviewvideoUrl;
 
     private String reviewImageurl;
 
-    private Long view;//조회수
+    private BigInteger view;//조회수
+
+    private String videoId;
+
+    private String reviewName;
+
+    private Long contnetId;
 
 }

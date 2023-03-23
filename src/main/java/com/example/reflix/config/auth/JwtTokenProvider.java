@@ -107,6 +107,8 @@ public class JwtTokenProvider implements InitializingBean {
             return newRefreshToken;
         }
         else {
+            log.info(findRefreshToken.getToken());
+            log.info(refreshToken);
             log.info("refresh 토큰이 일치하지 않습니다. ");
             return null;
         }

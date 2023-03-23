@@ -1,11 +1,19 @@
 package com.example.reflix.web.dto;
 
 import com.example.reflix.web.domain.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class contentsDetailResponseDto {
 
     private Long contentsId;
@@ -24,15 +32,12 @@ public class contentsDetailResponseDto {
 
     private int likelist;
 
-    @OneToOne(mappedBy = "contents")
     private contentsJanre janre;
 
     private List<contentsKeword> kewordList = new ArrayList<>();
 
-    @OneToMany(mappedBy = "contents")
     private List<review> reviewList = new ArrayList<>();
 
-    @OneToOne(mappedBy = "contents",fetch = FetchType.LAZY)
     private recomendContents rcmContents;
 
 }
