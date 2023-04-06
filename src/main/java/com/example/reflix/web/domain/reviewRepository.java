@@ -10,5 +10,6 @@ import java.util.Optional;
 public interface reviewRepository extends JpaRepository<review,Long> {
 
     public List<review> findByContentName(String contentname);
+    public List<review> findAllByContentId(Long Id);
 
 }

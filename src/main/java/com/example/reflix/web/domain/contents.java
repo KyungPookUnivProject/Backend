@@ -39,6 +39,10 @@ public class contents extends baseTimeEntity{
     @Column(nullable = false)
     private int likelist;
 
+    @Column(nullable = false)
+    private String story;
+
+
     @OneToOne(mappedBy = "contents")
     private contentsJanre janre;
 
@@ -48,13 +52,13 @@ public class contents extends baseTimeEntity{
     @OneToMany(mappedBy = "contents")
     private List<review> reviewList = new ArrayList<>();
 
-    @OneToOne(mappedBy = "contents",fetch = FetchType.LAZY)
-    private recomendContents rcmContents;
+//    @OneToMany(mappedBy = "contents",fetch = FetchType.LAZY)
+//    private recomendContents rcmContents;
 
 
-    public int getIntId(){
-        int intid = Math.toIntExact(this.getContentsId());
-        return intid;
-    }
+//    public int getIntId(){
+//        int intid = Math.toIntExact(this.getContentsId());
+//        return intid;
+//    }
 
 }

@@ -6,5 +6,5 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum category {
-    ANYMATION,DRAMA,MOVIE
+    MOVIE,DRAMA,ANIMATION
 }

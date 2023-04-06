@@ -31,12 +31,6 @@ public class securityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     public void configure(HttpSecurity http) throws Exception{
-//
-//        http.formLogin()
-//                .loginProcessingUrl("/auth/loginprocess")
-//                .loginPage("/auth/login")
-//                .defaultSuccessUrl("/main");
-
         http.csrf().disable();
         http.httpBasic().disable()
                 .authorizeRequests()
@@ -44,7 +38,7 @@ public class securityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/user/**").hasRole("USER")
                 .antMatchers("/auth/**","/v3/api-docs",
                         "/swagger*/**").permitAll()
-                .antMatchers("/contents/submit").permitAll()
+                .antMatchers("/contents/**").permitAll()
                 .anyRequest().authenticated();
 //                .and();
 //                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),

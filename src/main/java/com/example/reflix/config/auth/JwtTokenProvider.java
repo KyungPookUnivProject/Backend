@@ -8,6 +8,7 @@ import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.security.core.Authentication;
 import org.springframework.beans.factory.annotation.Value;
 //import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
@@ -27,6 +28,7 @@ import java.util.List;
 
 @Component
 @Log4j2
+@Configuration
 //@RequiredArgsConstructor
 public class JwtTokenProvider implements InitializingBean {
 
@@ -76,7 +78,7 @@ public class JwtTokenProvider implements InitializingBean {
                 .parseClaimsJws(token)
                 .getBody();
 
-        UserDetails userDetails = myUserDetailsService.loadUserByUsername(claims.getSubject());
+        userAdapter userDetails = myUserDetailsService.loadUserByUsername(claims.getSubject());
         return new UsernamePasswordAuthenticationToken(userDetails, token, userDetails.getAuthorities());
     }
 

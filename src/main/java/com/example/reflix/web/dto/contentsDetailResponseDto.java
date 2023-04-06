@@ -30,9 +30,12 @@ public class contentsDetailResponseDto {
 
     private category contentsCategory;
 
-    private int likelist;
+    private Long likelist;
 
-    private contentsJanre janre;
+    private String story;
+
+//    private contentsJanre janre;
+    private String janre;
 
     private List<contentsKeword> kewordList = new ArrayList<>();
 

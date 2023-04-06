@@ -91,7 +91,7 @@ public class youtubeServiceImpl implements youtubeService {
 
 
     @Transactional
-    public List<reviewResponseDto> reviewStartSubmit(String query, Long contentId){
+    public List<reviewResponseDto> reviewStartSubmit(String query, Long contentId,int category){
 
         log.info("start youtube"+ query);
         List<reviewResponseDto> resultlist = new ArrayList<>();
@@ -101,7 +101,13 @@ public class youtubeServiceImpl implements youtubeService {
                 YouTube.Search.List search = youtube.search().list("id,snippet");
                 String apiKey = YOUTUBE_APIKEY_ENV;
                 search.setKey(apiKey);
-                search.setQ(query+" 리뷰");
+                String prequrey = null;
+                switch (category){
+                    case 0 : prequrey = "애니메이션 "; break;
+                    case 1 : prequrey = "드라마"; break;
+                    case 2 : prequrey = "영화"; break;
+                }
+                search.setQ(prequrey+query+" 리뷰");
                 search.setOrder("relevance");
                 search.setType(YOUTUBE_SEARCH_TYPE);
                 String youTubeFields = YOUTUBE_SEARCH_FIELDS;

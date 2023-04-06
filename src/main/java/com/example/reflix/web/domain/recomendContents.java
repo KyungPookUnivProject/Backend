@@ -27,9 +27,9 @@ public class recomendContents extends baseTimeEntity{
     @ColumnDefault("0")
     private long similarity;
 
-    @OneToOne
-    @JoinColumn(name = "contentsId", insertable = false, updatable = false)
-    private contents contents;
+//    @ManyToOne
+//    @JoinColumn(name = "contentsId", insertable = false, updatable = false)
+//    private contents contents;
 
     @ManyToOne
     @JoinColumn(name = "userId", insertable = false, updatable = false)

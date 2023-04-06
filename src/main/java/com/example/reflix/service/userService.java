@@ -6,10 +6,7 @@ import com.example.reflix.config.auth.userPrinciple;
 import com.example.reflix.web.domain.Role;
 import com.example.reflix.web.domain.user;
 import com.example.reflix.web.domain.user1Repository;
-import com.example.reflix.web.dto.siginInResponseDto;
-import com.example.reflix.web.dto.userDetailResponseDto;
-import com.example.reflix.web.dto.userLoginDto;
-import com.example.reflix.web.dto.userRegisterDto;
+import com.example.reflix.web.dto.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -32,15 +29,20 @@ public class userService {
     private final CustomUserDetailService customUserDetailService;
 
     public siginInResponseDto login(userLoginDto userLoginDto){
-
+        log.info(userLoginDto.getEmail());
         UserDetails userDetails = customUserDetailService.loadUserByUsername(userLoginDto.getEmail());
 
         String hashPW=bCryptPasswordEncoder.encode(userLoginDto.getPassword());
         log.info("hashPW : " + hashPW + " userdetail"+ userDetails.getPassword());
 
-        if(hashPW.equals(userDetails.getPassword())){
+        log.info(userDetails.getUsername() + userDetails.getPassword());
+
+        if(!bCryptPasswordEncoder.matches(userLoginDto.getPassword(),userDetails.getPassword())){
+
             log.info("비번에러");
             throw new BadCredentialsException(userDetails.getUsername() + "password error");
+        }
+        if(hashPW.equals(userDetails.getPassword())){
         }
         log.info("며기부터안됨 authin");
         Authentication authentication =  new UsernamePasswordAuthenticationToken(
@@ -94,6 +96,27 @@ public class userService {
         else{
             return 0;
         }
+    }
+
+    public String userUpdate(updateRequestDto dto, userPrinciple user){
+        log.info("usrname = " +user.getUsername());
+        Optional<user> updateuser = user1Repository.findById(user.getId());
+
+        log.info("updateusername = "+updateuser.get().getEmail());
+        user saveuser = updateuser.get();
+        if(dto.getName()!=null){
+            log.info("Name qusrud");
+            saveuser.setName(dto.getName());
+        }
+        if(dto.getPassword()!=null){
+            log.info("password qusrud");
+
+            String hashPW=bCryptPasswordEncoder.encode(dto.getPassword());
+            saveuser.setPassword(hashPW);
+        }
+        user1Repository.save(saveuser);
+        return dto.getName();
+
 
 
     }

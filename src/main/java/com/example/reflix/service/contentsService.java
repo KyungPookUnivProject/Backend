@@ -1,21 +1,20 @@
 package com.example.reflix.service;
 
-import com.example.reflix.config.auth.userPrinciple;
+import com.example.reflix.config.auth.userAdapter;
 import com.example.reflix.web.domain.*;
 import com.example.reflix.web.dto.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +28,7 @@ public class contentsService {
     //콘텐츠상세조회
     public contentsDetailResponseDto contentdetail(Long contentId){
         contents contents = contentsRepository.findByContentsId(contentId);
+        Long likelist = contentLikeListRepository.countByContentId(contentId);
         contentsDetailResponseDto resultdto = contentsDetailResponseDto.builder()
                 .contentImageUrl(contents.getContentImageUrl())
                 .contentName(contents.getContentName())
@@ -36,23 +36,21 @@ public class contentsService {
                 .contentsCategory(contents.getContentsCategory())
                 .year(contents.getYear())
                 .grade(contents.getGrade())
-                .janre(null)
+                .janre(contents.getJanre().getJanre1())
+                .story(contents.getStory())
+                .likelist(likelist)
                 .build();
         return resultdto;
     }
 
 
     //파이썬 외부 연동 후 리턴값 String타입으로 리턴
-    public String pythonEexc(String command,String arg1) throws IOException {
+    public String pythonEexc(List<String> list) throws IOException {
         String line = null;
         StringBuilder sb= new StringBuilder();
         ProcessBuilder builder = new ProcessBuilder();
-//        builder.directory(new File(HomeDe))
-        builder.command("python3","/Users/gimjingwon/PycharmProjects/pythonProject1/json_sample.py");
-//        bu
-
-//        ProcessBuilder builder = new ProcessBuilder(arg1,command);
-
+        builder.command(list.get(0),list.get(1));
+//        builder.command(list);
         builder.redirectErrorStream(true);
         Process process = builder.start();
         BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream(), "euc-kr")); // 서브 프로세스가 출력하는 내용을 받기 위해'
@@ -88,12 +86,22 @@ public class contentsService {
     //유저에게 취향받아서 분석 후 유사한 콘텐츠 추천
     //유저별 추천된 콘텐츠 목록 저장
     @Transactional
-    public List<filterContentsDto> submit(contentFavoriteRequestDto contentFavoriteDto, user userPrincipal) throws IOException {
-        String command = "python3 json_sample.py";
-        String arg1 = "/Users/gimjingwon/PycharmProjects/pythonProject1/json_sample.py";
+    public List<filterContentsDto> submit(contentFavoriteRequestDto contentFavoriteDto, userAdapter userPrincipal) throws IOException {
+        String command = "python3";
+        String arg1 = "/Users/gimjingwon/PycharmProjects/pythonProject1/Json_sample.py";
         List<contents> contentsList = new ArrayList<>();
         List<filterContentsDto> collect= new ArrayList<>();
-        String contentString = pythonEexc(command,arg1);
+
+        List<String> pyrequestList = new ArrayList<>();
+        pyrequestList.add(command);
+        pyrequestList.add(arg1);
+//        pyrequestList.add(contentFavoriteDto.getContentVariation());
+//        pyrequestList.add(contentFavoriteDto.getJangre());
+//        pyrequestList.add(contentFavoriteDto.getKeword());
+//        pyrequestList.add(contentFavoriteDto.getYear());
+
+//        String contentString = pythonEexc(pyrequestList);
+        String contentString = pythonEexc(pyrequestList);
         log.info("response contnetslist data = "+contentString);
         if(!contentString.isEmpty()){
             ObjectMapper mapper = new ObjectMapper();
@@ -127,26 +135,59 @@ public class contentsService {
     }
 
 
-    public boolean contentLike(Long contentId, Long userId){
+    public boolean contentLike(Long contentId, userAdapter user){
         try{
-            contentLikeList list = contentLikeList.builder()
-                    .userId(userId)
-                    .contentId(contentId)
-                    .build();
-
-            contentLikeListRepository.save(list);
-            Optional<contents> contents = contentsRepository.findById(contentId);
-            contents savecontent = contents.get();
-            savecontent.setLikelist(savecontent.getLikelist()+1);
-            contentsRepository.save(savecontent);
-            return true;
+            if(contentLikeListRepository.findByContentIdAndUserId(contentId,user.getId()).isPresent()){
+                return true;
+            }
+            else{
+                contentLikeList list = contentLikeList.builder()
+                        .userId(user.getId())
+                        .contentId(contentId)
+                        .build();
+                contentLikeListRepository.save(list);
+                return true;
+            }
         }catch (Exception e){
             log.info(e.getMessage());
         }
-
         return false;
     }
+
+    public boolean contentDisLike(Long contentId, Long userId){
+        try{
+            Optional<contentLikeList> rid = contentLikeListRepository.findByContentIdAndUserId(contentId,userId);
+            if(rid.isPresent()){
+                contentLikeListRepository.delete(rid.get());
+                return true;
+            }
+            else{
+                return true;
+            }
+        }catch (Exception e){
+            log.info(e.getMessage());
+        }
+        return false;
+    }
+
+    public void movieadd(){
+
+        contents content = contents.builder()
+                .contentName("마더")
+                .year("2020")
+                .runnigTime("2:00")
+                .contentImageUrl("https://i.ytimg.com/vi/riAj-eT_rBo/hqdefault.jpg")
+                .contentsCategory(category.MOVIE)
+                .story("story test")
+                .grade("grade")
+                .build();
+
+        contentsRepository.save(content);
+        return;
+
+    }
     public String movieCrowling() {
+
         String command = "python3";
         String arg1 = "/Users/gimjingwon/PycharmProjects/pythonProject1/hello.py"; //
         Process ps=null;

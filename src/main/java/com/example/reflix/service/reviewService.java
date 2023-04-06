@@ -18,12 +18,15 @@ public class reviewService {
     private final reviewRepository reviewRepository;
 
     @Transactional
-    public List<reviewResponseDto> reviewrecomend(String contentName){
+    public List<reviewResponseDto> reviewrecomend(Long contentId){
 
-        List<review> reviewlist = reviewRepository.findByContentName(contentName);
+        List<review> reviewlist = reviewRepository.findAllByContentId(contentId);
 
         List<reviewResponseDto> returnReviewList = new ArrayList<>();
         for(review rid : reviewlist){
+            if(returnReviewList.size()>4){
+                break;
+            }
             reviewResponseDto dto = reviewResponseDto.builder()
                     .view(rid.getView())
                     .reviewImageurl(rid.getReviewImageurl())

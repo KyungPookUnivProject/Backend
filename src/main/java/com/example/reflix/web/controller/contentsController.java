@@ -1,5 +1,6 @@
 package com.example.reflix.web.controller;
 
+import com.example.reflix.config.auth.userAdapter;
 import com.example.reflix.config.auth.userPrinciple;
 import com.example.reflix.service.contentsService;
 import com.example.reflix.service.reviewService;
@@ -39,7 +40,7 @@ public class contentsController {
             notes = "콘텐츠 종류, 장르, 키워드, 시간대 json으로 body에 담아서 요청," +
                     "영화 목록을 responsebody에 json으로 응답")
     @PostMapping("/contents/submit")
-    public ResponseEntity contentSubmit(@RequestBody contentFavoriteRequestDto contentFavoriteDto, @AuthenticationPrincipal user user) throws IOException, InterruptedException {
+    public ResponseEntity contentSubmit(@RequestBody contentFavoriteRequestDto contentFavoriteDto, @AuthenticationPrincipal userAdapter user) throws IOException, InterruptedException {
         log.info("obString");
         log.info(user.getAuthorities());
         List<filterContentsDto> contentsList = contentsservice.submit(contentFavoriteDto,user);//사용자식별아이디 추가해야됨
@@ -77,11 +78,11 @@ public class contentsController {
             notes = "해당영화의 이름을 url에 담아서 요청," +
                     "해당영화의 리뷰목록을 json으로 응답")
     @GetMapping("/contents/review")
-    public ResponseEntity reviewlook(@RequestParam Long contentId,String contentname){
+    public ResponseEntity reviewlook(@RequestParam Long contentId,String contentname,int category){
         log.info(contentId);
-        List<reviewResponseDto> allReview = reviewService.reviewrecomend(contentname);
+        List<reviewResponseDto> allReview = reviewService.reviewrecomend(contentId);
         if(allReview.isEmpty()){
-            allReview = youtubeService.reviewStartSubmit(contentname,contentId);
+            allReview = youtubeService.reviewStartSubmit(contentname,contentId,category);
         }
         if(allReview.isEmpty()){
             String errMsg= "No data";
@@ -105,13 +106,27 @@ public class contentsController {
             notes = "콘텐츠 id와 유저 email을 바디에 담아서 요청받음" +
                     "콘텐츠테이블에 좋아요횟수 업데이트")
     @PostMapping("/content/like")
-    public ResponseEntity contentLike(@RequestBody Long contentId, @AuthenticationPrincipal userPrinciple userPrinciple){
-        if(contentsservice.contentLike(contentId,userPrinciple.getId())){
-            return new ResponseEntity<>(true,HttpStatus.OK);
+    public ResponseEntity contentLike(@RequestBody Long contentId,int flag, userAdapter userPrinciple){
+        if(flag==1){
+            if(contentsservice.contentLike(contentId,userPrinciple)){
+                return new ResponseEntity<>(true,HttpStatus.OK);
+            }
+            else{
+                return new ResponseEntity<>(false,HttpStatus.NO_CONTENT);
+            }
         }
         else{
-            return new ResponseEntity<>(false,HttpStatus.NO_CONTENT);
+            if(contentsservice.contentDisLike(contentId,userPrinciple.getId())){
+                return new ResponseEntity<>(true,HttpStatus.OK);
+            }
+            else{
+                return new ResponseEntity<>(false,HttpStatus.NO_CONTENT);
+            }
         }
+    }
+
+    @PostMapping("/auth/addmovie")
+    public void movieadd(){contentsservice.movieadd();
     }
 
     @Scheduled(cron = "0 0 23 * * *", zone = "Asia/Seoul")
