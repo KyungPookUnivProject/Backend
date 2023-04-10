@@ -11,7 +11,7 @@ public class contentFavoriteRequestDto {
     private String year;
     private String keword;
     private String jangre;
-    private String contentVariation;
+    private int category;
 
 
 }

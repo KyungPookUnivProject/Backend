@@ -7,8 +7,7 @@ import java.util.Optional;
 
 public interface contentLikeListRepository extends JpaRepository<contentLikeList,Long> {
 
-    Optional<contentLikeList> findByContentIdAndUserId(Long contentId, Long userId);
-
+    Optional<contentLikeList> findByContentIdAndUser(Long contentId, Long userId);
     Long countByContentId(Long contentId);
 
 }

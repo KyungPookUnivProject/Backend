@@ -1,9 +1,7 @@
 package com.example.reflix.web.domain;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import jdk.jfr.Category;
+import lombok.*;
 
 import javax.persistence.*;
 
@@ -12,23 +10,30 @@ import javax.persistence.*;
 @Builder
 @AllArgsConstructor
 @Getter
+@Setter
 public class contentLikeList extends baseTimeEntity{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long Id;
 
-    @OneToOne
+//    @JoinColumn(name = "movieId")
+//    private Long movieid;
+//    @JoinColumn(name = "tvserisId")
+//    private Long tvseris;
+//    @JoinColumn(name = "animationId")
+//    private Long animation;
+//    @OneToOne
     @JoinColumn(name = "contentsId")
-    private contents contents;
+    private Long contents;
+    @Column
+    private category category;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "userId")
     private user user;
 
 
-    @Column(name = "contentsId", insertable = false,updatable = false)
+    @Column(name = "contentsId")
     private Long contentId;
-    @Column(name = "userId",insertable = false,updatable = false)
-    private Long userId;
 }

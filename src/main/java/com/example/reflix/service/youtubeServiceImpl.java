@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Log4j2
 public class youtubeServiceImpl implements youtubeService {
 
-    private final reviewService reviewservice;
+    private final ReviewServiceImpl reviewservice;
 
     public static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
     public static final GsonFactory JSON_FACTORY     = new GsonFactory();
@@ -103,9 +103,9 @@ public class youtubeServiceImpl implements youtubeService {
                 search.setKey(apiKey);
                 String prequrey = null;
                 switch (category){
-                    case 0 : prequrey = "애니메이션 "; break;
+                    case 0 : prequrey = "영화 "; break;
                     case 1 : prequrey = "드라마"; break;
-                    case 2 : prequrey = "영화"; break;
+                    case 2 : prequrey = "애니메이션"; break;
                 }
                 search.setQ(prequrey+query+" 리뷰");
                 search.setOrder("relevance");
@@ -122,18 +122,19 @@ public class youtubeServiceImpl implements youtubeService {
                 if (searchResultList != null) {
                     for (SearchResult rid : searchResultList) {
                         reviewResponseDto item = reviewResponseDto.builder()
-                                .contnetId(contentId)
+                                .contentId(contentId)
+                                .reviewName(query)
                                 .videoId(rid.getId().getVideoId())
                                 .reviewName(rid.getSnippet().getTitle())
                                 .reviewImageurl(rid.getSnippet().getThumbnails().getHigh().getUrl())
                                 .videoId(GOOGLE_YOUTUBE_URL+rid.getId().getVideoId())
                                 .build();
 
+
                         resultlist.add(item);
-                        log.info("title : "+rid.getId());
+                        log.info("title : "+ item.getReviewName());
                     }
-//                    resultlist = getVideoList(searchResultList,query,contentId);
-                    reviewservice.reviewSave(resultlist);
+                    reviewservice.reviewSave(resultlist,category);
                     return resultlist;
                 }
             }

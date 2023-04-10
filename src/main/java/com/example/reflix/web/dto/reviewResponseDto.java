@@ -21,6 +21,6 @@ public class reviewResponseDto {
 
     private String reviewName;
 
-    private Long contnetId;
+    private Long contentId;
 
 }

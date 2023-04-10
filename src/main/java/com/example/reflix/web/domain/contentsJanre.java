@@ -29,6 +29,12 @@ public class contentsJanre extends baseTimeEntity{
 
     //사실 장르에서 콘텐츠를 불러올 필요가 없기때문에 양방향일 필요가없다. 필요없다 사실
     @OneToOne
-    @JoinColumn(name = "contentsId", insertable = false, updatable = false)
-    private contents contents;
+    @JoinColumn(name = "movieId", insertable = false, updatable = false)
+    private movie movie;
+    @OneToOne
+    @JoinColumn(name = "tvserisId", insertable = false, updatable = false)
+    private Tvseris tvseris;
+    @OneToOne
+    @JoinColumn(name = "animationId", insertable = false, updatable = false)
+    private animation animation;
 }

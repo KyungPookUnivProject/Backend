@@ -1,9 +1,6 @@
 package com.example.reflix.web.domain;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.*;
 import java.math.BigInteger;
@@ -15,6 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
+@Setter
 public class review extends baseTimeEntity{
 
     //콘텐츠 id당 리뷰리스트로 만들어야한다. 복합키사용 즉 객체에선 리스트 사용
@@ -39,10 +37,23 @@ public class review extends baseTimeEntity{
     private List<reviewLookList> lookList = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "contentsId", insertable = false, updatable = false)
-    private contents contents;
+    @JoinColumn(name = "movieId", insertable = false, updatable = false)
+    private movie movie;
 
-    @Column(name = "contentsId")
-    private Long contentId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tvserisId", insertable = false, updatable = false)
+    private Tvseris tvseris;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "animationId", insertable = false, updatable = false)
+    private animation animation;
+
+    @Column(name = "movieId")
+    private Long movieId;
+
+    @Column(name = "tvserisId")
+    private Long tvserisId;
+
+    @Column(name = "animationId")
+    private Long animationId;
 }

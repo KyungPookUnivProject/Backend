@@ -18,8 +18,14 @@ public class contentsKeword extends baseTimeEntity{
     private Long kewordId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "contentsId", insertable = false, updatable = false)
-    private contents contents;
+    @JoinColumn(name = "movieId", insertable = false, updatable = false)
+    private movie movie;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tvserisId", insertable = false, updatable = false)
+    private Tvseris tvseris;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "animationId", insertable = false, updatable = false)
+    private animation animation;
 
     @Column(nullable = false)
     private String keword;

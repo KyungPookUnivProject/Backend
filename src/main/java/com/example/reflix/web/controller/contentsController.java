@@ -1,49 +1,52 @@
 package com.example.reflix.web.controller;
 
 import com.example.reflix.config.auth.userAdapter;
-import com.example.reflix.config.auth.userPrinciple;
-import com.example.reflix.service.contentsService;
-import com.example.reflix.service.reviewService;
-import com.example.reflix.service.userService;
-import com.example.reflix.service.youtubeServiceImpl;
-import com.example.reflix.web.domain.contents;
-import com.example.reflix.web.domain.user;
+import com.example.reflix.service.*;
 import com.example.reflix.web.dto.*;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.json.simple.JSONObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import javax.persistence.Id;
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.security.Principal;
-import java.util.Arrays;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 @RestController
 @RequiredArgsConstructor
 @Log4j2
 public class contentsController {
 
-    private final contentsService contentsservice;
+    private final ContentsCommonService contentsservice;
+    private final AnimationServiceImpl animationService;
+    private final MovieServiceImpl movieService;
+    private final TvService tvService;
     private final youtubeServiceImpl youtubeService;
-    private final reviewService reviewService;
+    private final ReviewServiceImpl reviewService;
 
+    private final String KEY ="cb3fbd26fe7fe53cf8af0ba2b6d72370";
     @ApiOperation(value = "콘텐츠취향을 분석하기",
             notes = "콘텐츠 종류, 장르, 키워드, 시간대 json으로 body에 담아서 요청," +
                     "영화 목록을 responsebody에 json으로 응답")
     @PostMapping("/contents/submit")
     public ResponseEntity contentSubmit(@RequestBody contentFavoriteRequestDto contentFavoriteDto, @AuthenticationPrincipal userAdapter user) throws IOException, InterruptedException {
-        log.info("obString");
-        log.info(user.getAuthorities());
-        List<filterContentsDto> contentsList = contentsservice.submit(contentFavoriteDto,user);//사용자식별아이디 추가해야됨
+//        log.info(user.getAuthorities());
+        List<recommendContentsDto> contentsList=new ArrayList<>();
+        switch (contentFavoriteDto.getCategory()){
+            case 2: contentsList = animationService.submit(contentFavoriteDto,user); break;
+            case 0 :  contentsList = movieService.submit(contentFavoriteDto,user);         log.info("contents id = "+(contentsList.get(0).getContentsId()));
+                break;
+            case 1 :  contentsList = tvService.submit(contentFavoriteDto,user); break;
+        }
+        log.info("contents id = "+(contentsList.get(0).getContentsId()));
+//        List<filterContentsDto> contentsList = contentsservice.submit(contentFavoriteDto,user);//사용자식별아이디 추가해야됨
         if(contentsList.isEmpty()){
             String errMsg = "NO data";
             log.error(errMsg);
@@ -57,9 +60,15 @@ public class contentsController {
     @ApiOperation(value = "필요한 x,y좌표, title을 해당위치 정보 db에 저장",
             notes = "필터링된 영화목록들 표시 ")
     @GetMapping("/contents/detail")
-    public ResponseEntity contentdetail(@RequestParam Long contentId){
+    public ResponseEntity contentdetail(@RequestParam Long contentId,@RequestParam int category){
+        contentsDetailResponseDto contents = null;
+        switch (category){
+            case 2: contents = animationService.contentdetail(contentId); break;
+            case 0 :  contents = movieService.contentdetail(contentId); break;
+            case 1 :  contents = tvService.contentdetail(contentId); break;
+        }
 
-        contentsDetailResponseDto contents = contentsservice.contentdetail(contentId);
+//        contentsDetailResponseDto contents = contentsservice.contentdetail(contentId);
 
         if(contents==null){
             String errMsg="NO data";
@@ -80,7 +89,7 @@ public class contentsController {
     @GetMapping("/contents/review")
     public ResponseEntity reviewlook(@RequestParam Long contentId,String contentname,int category){
         log.info(contentId);
-        List<reviewResponseDto> allReview = reviewService.reviewrecomend(contentId);
+        List<reviewResponseDto> allReview = reviewService.reviewrecomend(contentId,category);
         if(allReview.isEmpty()){
             allReview = youtubeService.reviewStartSubmit(contentname,contentId,category);
         }
@@ -96,39 +105,90 @@ public class contentsController {
     //유저의 리뷰시청목록에 추가
     @ApiOperation(value = "시청한 리뷰영상 히스토리에 저장",
             notes = "해당 유저의 email과 리뷰영상id를 바디에 담아서요청받음" +
-                    "리뷰목록에 유저와 조인하여 저장")
+                    "리뷰목록에 유저와 조인하여 저장")//시청한 리뷰영상목록에 저장
     @PostMapping("/review/look")
-    public void reveiewSave(@RequestBody Long reviewId, String email, Authentication authentication){
-//        contentsservice.reviewLookedAdd(reviewId,email,authentication);
+    public ResponseEntity reveiewSave(@RequestBody reviewLookRequestDto reviewLookRequestDto ,@AuthenticationPrincipal userAdapter userPrinciple){
+        Long result = reviewService.reviewLookAdd(reviewLookRequestDto,userPrinciple);
+
+        return new ResponseEntity(result,HttpStatus.OK);
     }
 
     @ApiOperation(value = "콘텐츠 좋아요 기능",
             notes = "콘텐츠 id와 유저 email을 바디에 담아서 요청받음" +
                     "콘텐츠테이블에 좋아요횟수 업데이트")
     @PostMapping("/content/like")
-    public ResponseEntity contentLike(@RequestBody Long contentId,int flag, userAdapter userPrinciple){
+    public ResponseEntity contentLike(@RequestParam Long contentId,int category,int flag, @AuthenticationPrincipal userAdapter userPrinciple){
         if(flag==1){
-            if(contentsservice.contentLike(contentId,userPrinciple)){
-                return new ResponseEntity<>(true,HttpStatus.OK);
+            if(contentsservice.contentLike(contentId,category,userPrinciple)){
+                log.info("상승");
+                return new ResponseEntity(true, HttpStatus.OK);
             }
             else{
-                return new ResponseEntity<>(false,HttpStatus.NO_CONTENT);
+                log.info("상승실패 이유무엇");
+                return new ResponseEntity(false,HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
         else{
-            if(contentsservice.contentDisLike(contentId,userPrinciple.getId())){
-                return new ResponseEntity<>(true,HttpStatus.OK);
+            if(contentsservice.contentDisLike(contentId, userPrinciple.getId())){
+                log.info("하락");
+                return new ResponseEntity(true, HttpStatus.OK);
             }
             else{
-                return new ResponseEntity<>(false,HttpStatus.NO_CONTENT);
+                log.info("하락실패 이유무엇");
+                return new ResponseEntity(false,HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
     }
 
     @PostMapping("/auth/addmovie")
-    public void movieadd(){contentsservice.movieadd();
+    public void movieadd(@RequestBody movieAddDto dto){contentsservice.movieadd(dto);
     }
 
+
+
+    @GetMapping("/auth/movie/test")
+    public List<contentsDetailDto> getTestMovie(){
+
+        return contentsservice.getmovieten();
+    }
+
+
+
+    @GetMapping("/auth/api/getInfo")
+    public String getInfo() {
+
+        int pages = 1;
+
+        try {
+
+            for (int i = 1; i <= 1; i++) {
+                String apiURL = "https://api.themoviedb.org/3/movie/11862?api_key=" + KEY
+                        + "&language=ko";
+
+
+//                String apiURL = "https://api.themoviedb.org/3/discover/movie?api_key=" + KEY
+//                        + "&language=ko";
+                URL url = new URL(apiURL);
+
+                BufferedReader bf;
+
+                bf = new BufferedReader(new InputStreamReader(url.openStream(), "UTF-8"));
+
+                String result = bf.readLine();
+
+
+
+
+                log.info(result);
+
+//                ApiService.getInfo(result);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return "ok";
+    }
     @Scheduled(cron = "0 0 23 * * *", zone = "Asia/Seoul")
     public ResponseEntity movieUpdate(){
         //매일 23시마다 크롤링하여 영화정보들이 업데이트된다.

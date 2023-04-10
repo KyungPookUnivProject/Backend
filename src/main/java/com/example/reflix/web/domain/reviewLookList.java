@@ -19,13 +19,10 @@ public class reviewLookList extends baseTimeEntity{
     private Long Id;
 
     @Column(nullable = false)
-    private String contentsname;
+    private int category;
 
     @Column(nullable = false)
     private String reviewname;
-
-    @Column(nullable = false)
-    private String contentsImageUrl;
 
     @Column(nullable = false)
     private String reviewImageUrl;
@@ -33,9 +30,20 @@ public class reviewLookList extends baseTimeEntity{
     @Column(nullable = false)
     private String reviewVideoUrl;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "contentsId", insertable = false, updatable = false)
-    private contents contents;
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "movieId", insertable = false, updatable = false)
+//    private movie movie;
+//
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "tvserisId", insertable = false, updatable = false)
+//    private Tvseris tvseris;
+//
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "animationId", insertable = false, updatable = false)
+//    private animation animation;
+    @Column
+    Long contentsId;
+
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reviewId", insertable = false, updatable = false)
@@ -44,6 +52,9 @@ public class reviewLookList extends baseTimeEntity{
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "userId")
     private user user;
+
+    @Column(name = "reviewId")
+    private Long reviewId;
 //
 //    public void setMember(user1 member) {
 //        this.user = member;
