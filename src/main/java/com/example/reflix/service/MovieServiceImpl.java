@@ -2,11 +2,13 @@ package com.example.reflix.service;
 
 import com.example.reflix.config.auth.userAdapter;
 import com.example.reflix.web.domain.*;
+import com.example.reflix.web.domain.repository.ContentsLikeListRepository;
+import com.example.reflix.web.domain.repository.MovieRepository;
 import com.example.reflix.web.dto.*;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,16 +22,16 @@ import java.util.List;
 @Log4j2
 public class MovieServiceImpl implements contentsService{
 
-    private final movieRepository movieRepository;
-    private final contentLikeListRepository contentLikeListRepository;
+    private final MovieRepository movieRepository;
+    private final ContentsLikeListRepository contentsLikeListRepository;
     private final ContentsCommonService contentsService;
     //콘텐츠상세조회
     @Override
     @Transactional
-    public contentsDetailResponseDto contentdetail(Long contentId){
-        movie contents = movieRepository.findByContentsId(contentId);
-        Long likelist = contentLikeListRepository.countByContentId(contentId);
-        contentsDetailResponseDto resultdto = contentsDetailResponseDto.builder()
+    public ContentsDetailResponseDto contentdetail(Long contentId){
+        Movie contents = movieRepository.findByContentsId(contentId);
+        Long likelist = contentsLikeListRepository.countByContentId(contentId);
+        ContentsDetailResponseDto resultdto = ContentsDetailResponseDto.builder()
                 .contentImageUrl(contents.getImageUrl())
                 .contentName(contents.getName())
                 .contentsId(contents.getContentsId())
@@ -47,31 +49,29 @@ public class MovieServiceImpl implements contentsService{
     //유저별 추천된 콘텐츠 목록 저장
     @Transactional
     @Override
-    public List<recommendContentsDto> submit(contentFavoriteRequestDto contentFavoriteDto, userAdapter userPrincipal) throws IOException {
+    public List<ContentsRecommendResponseDto> submit(ContentsFavoriteRequestDto contentFavoriteDto, userAdapter userPrincipal) throws IOException {
         String command = "python3";
-        String arg1 = "/Users/gimjingwon/PycharmProjects/pythonProject1/Json_sample.py";
-        List<recommendContentsDto> contentsList= new ArrayList<>();
+        String arg1 = "/Users/gimjingwon/PycharmProjects/pythonProject1/completion/movie_recommend_genre.py";
+        List<ContentsRecommendResponseDto> contentsList= new ArrayList<>();
         List<String> pyrequestList = new ArrayList<>();
         pyrequestList.add(command);
         pyrequestList.add(arg1);
-//        pyrequestList.add(contentFavoriteDto.getContentVariation());
-//        pyrequestList.add(contentFavoriteDto.getJangre());
+//        pyrequestList.add(contentFavoriteDto.getCategory().name());
+        pyrequestList.add(contentFavoriteDto.getJangre());
 //        pyrequestList.add(contentFavoriteDto.getKeword());
 //        pyrequestList.add(contentFavoriteDto.getYear());
-        String contentString="{\n";
-        contentString+= contentsService.pythonEexc(pyrequestList);
-        if(!contentString.isEmpty()){
+        String contentString= contentsService.pythonEexc(pyrequestList);
+        if(contentString!=null){
             ObjectMapper mapper = new ObjectMapper();
             List<Long> idlist = new ArrayList<>();
-            List<similarContentDto> list = Arrays.asList(mapper.readValue(contentString, similarContentDto.class));
-            for(similarContentDto dto : list){
-                idlist.add(dto.getContentid());
+            List<SimilarContentsDto> list = Arrays.asList(mapper.readValue(contentString, SimilarContentsDto[].class));
+            for(SimilarContentsDto dto : list){
+                idlist.add(dto.getTmdbId());
             }
             contentsList = movieRepository.findAllBymovieId(idlist);
-            log.info("contentslist.size = "+contentsList.size());
-            log.info("list.size = "+list.size());
             for(int i=0;i<contentsList.size();i++){
-                contentsList.get(i).setSimir(list.get(i).getSimilarity());
+                contentsList.get(i).setSimir(90);
+//                contentsList.get(i).setSimir(list.get(i).getSimilarity());
             }
             contentsService.recomendContentsSave(contentsList,userPrincipal.getId());
             return contentsList;
@@ -79,5 +79,41 @@ public class MovieServiceImpl implements contentsService{
         else{
             return contentsList;
         }
+    }
+
+    @Override
+    public List<ContentsDetailDto> search(String q){
+        //필요한건 q를 나눈다 띄어쓰기별로
+        //나눈거를 db에서 자연어 검색을 찾는다.
+        //이때 넣어야되는게 키워드,이름
+        q = "%"+q+"%";
+        List<Movie> list = movieRepository.findByNameSearch(q);
+        List<ContentsDetailDto> resultList = new ArrayList<>();
+        for(Movie rid : list){
+            ContentsDetailDto dto  = ContentsDetailDto.builder()
+                    .contentsId(rid.getContentsId())
+                    .contentName(rid.getName())
+                    .contentImageUrl(rid.getImageUrl())
+                    .contentsCategory(rid.getContentsCategory())
+                    .year(rid.getYear()).build();
+            resultList.add(dto);
+        }
+        return resultList;
+    }
+
+    public List<ContentsDetailDto> getmovieten(){
+        List<Movie> list = movieRepository.findAll(PageRequest.of(0, 10)).getContent();
+        List<ContentsDetailDto> resultList = new ArrayList<>();
+
+        for(Movie rid : list){
+            ContentsDetailDto dto  = ContentsDetailDto.builder()
+                    .contentsId(rid.getContentsId())
+                    .contentName(rid.getName())
+                    .contentImageUrl(rid.getImageUrl())
+                    .contentsCategory(rid.getContentsCategory())
+                    .year(rid.getYear()).build();
+            resultList.add(dto);
+        }
+        return  resultList;
     }
 }

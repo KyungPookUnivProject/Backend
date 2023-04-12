@@ -1,14 +1,14 @@
 package com.example.reflix.config.auth;
 
-import com.example.reflix.web.domain.user;
+import com.example.reflix.web.domain.User;
 import lombok.Getter;
 
 @Getter
 public class userAdapter extends userPrinciple{
 
-    private user user;
+    private User user;
 
-    public userAdapter(user user){
+    public userAdapter(User user){
         super(user);
         this.user = user;
     }

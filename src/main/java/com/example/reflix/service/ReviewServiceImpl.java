@@ -1,15 +1,17 @@
 package com.example.reflix.service;
 
 import com.example.reflix.config.auth.userAdapter;
-import com.example.reflix.web.domain.review;
-import com.example.reflix.web.domain.reviewLookList;
-import com.example.reflix.web.domain.reviewLookListRepository;
-import com.example.reflix.web.domain.reviewRepository;
-import com.example.reflix.web.dto.reviewLookRequestDto;
+import com.example.reflix.web.domain.Review;
+import com.example.reflix.web.domain.ReviewLookList;
+import com.example.reflix.web.domain.User;
+import com.example.reflix.web.domain.repository.ReviewLookListRepository;
+import com.example.reflix.web.domain.repository.ReviewRepository;
+import com.example.reflix.web.dto.ReviewLookRequestDto;
+import com.example.reflix.web.dto.ReviewLookResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.example.reflix.web.dto.reviewResponseDto;
+import com.example.reflix.web.dto.ReviewResponseDto;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,12 +21,12 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ReviewServiceImpl {
 
-    private final reviewRepository reviewRepository;
-    private final reviewLookListRepository reviewLookListRepository;
+    private final ReviewRepository reviewRepository;
+    private final ReviewLookListRepository reviewLookListRepository;
 
     @Transactional
-    public List<reviewResponseDto> reviewrecomend(Long contentId,int category){
-        List<review> reviewlist = new ArrayList<>();
+    public List<ReviewResponseDto> reviewrecomend(Long contentId, int category){
+        List<Review> reviewlist = new ArrayList<>();
         switch (category){
             case 0: reviewlist = reviewRepository.findAllByMovieId(contentId);break;
             case 1: reviewlist = reviewRepository.findAllByTvserisId(contentId); break;
@@ -32,12 +34,12 @@ public class ReviewServiceImpl {
         }
 //        List<review> reviewlist = reviewRepository.findAllByContentId(contentId);
 
-        List<reviewResponseDto> returnReviewList = new ArrayList<>();
-        for(review rid : reviewlist){
+        List<ReviewResponseDto> returnReviewList = new ArrayList<>();
+        for(Review rid : reviewlist){
             if(returnReviewList.size()>4){
                 break;
             }
-            reviewResponseDto dto = reviewResponseDto.builder()
+            ReviewResponseDto dto = ReviewResponseDto.builder()
                     .view(rid.getView())
                     .reviewImageurl(rid.getReviewImageurl())
                     .videoId(rid.getReviewvideoUrl())
@@ -54,10 +56,10 @@ public class ReviewServiceImpl {
     }
 
     @Transactional
-    public void reviewSave(List<reviewResponseDto> dtolist,int category){
-        List<review> reviewList = new ArrayList<>();
-        for(reviewResponseDto dto : dtolist){
-            review saveReivew =  review.builder()
+    public void reviewSave(List<ReviewResponseDto> dtolist, int category){
+        List<Review> reviewList = new ArrayList<>();
+        for(ReviewResponseDto dto : dtolist){
+            Review saveReivew =  Review.builder()
                     .contentName(dto.getReviewName())
                     .reviewImageurl(dto.getReviewImageurl())
                     .reviewvideoUrl(dto.getVideoId())
@@ -77,9 +79,9 @@ public class ReviewServiceImpl {
     }
 
     @Transactional
-    public Long reviewLookAdd(reviewLookRequestDto dto, userAdapter userId){
-        Optional<review> review = reviewRepository.findById(dto.getReveiwId());
-        reviewLookList list = reviewLookList.builder()
+    public Long reviewLookAdd(ReviewLookRequestDto dto, userAdapter userId){
+        Optional<Review> review = reviewRepository.findById(dto.getReveiwId());
+        ReviewLookList list = ReviewLookList.builder()
                 .contentsId(dto.getContentsId())
                 .reviewImageUrl(review.get().getReviewImageurl())
                 .reviewname(review.get().getContentName())
@@ -90,5 +92,24 @@ public class ReviewServiceImpl {
                 .build();
         reviewLookListRepository.save(list);
         return list.getReviewId();
+    }
+
+    @Transactional
+    public List<ReviewLookResponseDto> reviewLookDetail(User userId){
+        List<ReviewLookList> ReviewLookLists = reviewLookListRepository.findAllByUser(userId);
+
+        List<ReviewLookResponseDto> ResponseList = new ArrayList<>();
+        for(ReviewLookList rid: ReviewLookLists){
+            ReviewLookResponseDto dto = ReviewLookResponseDto.builder()
+                    .reviewId(rid.getReviewId())
+                    .reviewName(rid.getReviewname())
+                    .reviewImageUrl(rid.getReviewImageUrl())
+                    .reviewVideoUrl(rid.getReviewVideoUrl())
+                    .contentsId(rid.getContentsId())
+                    .category(rid.getCategory())
+                    .build();
+            ResponseList.add(dto);
+        }
+        return ResponseList;
     }
 }

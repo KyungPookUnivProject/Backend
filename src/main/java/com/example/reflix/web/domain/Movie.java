@@ -14,7 +14,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Tvseris extends BaseTimeEntity {
+public class Movie extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -45,13 +45,13 @@ public class Tvseris extends BaseTimeEntity {
     private String story;
 
 
-    @OneToOne(mappedBy = "tvseris")
+    @OneToOne(mappedBy = "movie")
     private ContentsJanre janre;
 
-    @OneToMany(mappedBy = "tvseris")
+    @OneToMany(mappedBy = "movie")
     private List<contentsKeword> kewordList = new ArrayList<>();
 
-    @OneToMany(mappedBy = "tvseris")
+    @OneToMany(mappedBy = "movie")
     private List<Review> reviewList = new ArrayList<>();
 
 }

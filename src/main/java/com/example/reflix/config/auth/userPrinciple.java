@@ -1,6 +1,6 @@
 package com.example.reflix.config.auth;
 
-import com.example.reflix.web.domain.user;
+import com.example.reflix.web.domain.User;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
@@ -11,7 +11,7 @@ import java.util.Collection;
 @Getter
 @RequiredArgsConstructor
 public class userPrinciple implements UserDetails {
-    private final user member;
+    private final User member;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

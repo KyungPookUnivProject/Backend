@@ -4,17 +4,19 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Entity
 @Builder
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Tvseris extends BaseTimeEntity {
+public class Animation extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -45,13 +47,13 @@ public class Tvseris extends BaseTimeEntity {
     private String story;
 
 
-    @OneToOne(mappedBy = "tvseris")
+    @OneToOne(mappedBy = "animation")
     private ContentsJanre janre;
 
-    @OneToMany(mappedBy = "tvseris")
+    @OneToMany(mappedBy = "animation")
     private List<contentsKeword> kewordList = new ArrayList<>();
 
-    @OneToMany(mappedBy = "tvseris")
+    @OneToMany(mappedBy = "animation")
     private List<Review> reviewList = new ArrayList<>();
 
 }

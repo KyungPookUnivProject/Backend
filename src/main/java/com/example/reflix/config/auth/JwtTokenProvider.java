@@ -1,11 +1,9 @@
 package com.example.reflix.config.auth;
 
-import com.example.reflix.web.domain.Role;
-import com.example.reflix.web.domain.refreshToken;
-import com.example.reflix.web.domain.refreshTokenRepository;
+import com.example.reflix.web.domain.RefreshToken;
+import com.example.reflix.web.domain.repository.RefreshTokenRepository;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.annotation.Configuration;
@@ -13,18 +11,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.beans.factory.annotation.Value;
 //import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
-import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import java.util.Base64;
 import java.util.Date;
 import java.security.Key;
-
-import java.util.List;
 
 @Component
 @Log4j2
@@ -33,7 +26,7 @@ import java.util.List;
 public class JwtTokenProvider implements InitializingBean {
 
     private final CustomUserDetailService myUserDetailsService;
-    private final refreshTokenRepository refreshTokenRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     private final String secretKey;
     private final long tokenValidityInMs;
@@ -43,7 +36,7 @@ public class JwtTokenProvider implements InitializingBean {
                             @Value("${jwt.token-validity-in-sec}") long tokenValidity,
                             @Value("${jwt.refresh-token-validity-in-sec}") long refreshTokenValidity,
                             CustomUserDetailService myUserDetailsService,
-                            refreshTokenRepository refreshTokenRepository){
+                            RefreshTokenRepository refreshTokenRepository){
         this.secretKey = secretKey;
         this.tokenValidityInMs = tokenValidity * 1000;
         this.refreshTokenValidityInMs = refreshTokenValidity * 1000;
@@ -99,7 +92,7 @@ public class JwtTokenProvider implements InitializingBean {
     public String reissueRefreshToken(String refreshToken) throws RuntimeException{
         // refresh token을 디비의 그것과 비교해보기
         Authentication authentication = getAuthentication(refreshToken);
-        refreshToken findRefreshToken = refreshTokenRepository.findByUserId(authentication.getName())
+        RefreshToken findRefreshToken = refreshTokenRepository.findByUserId(authentication.getName())
                 .orElseThrow(() -> new UsernameNotFoundException("userId : " + authentication.getName() + " was not found"));
 
         if(findRefreshToken.getToken().equals(refreshToken)){
@@ -127,7 +120,7 @@ public class JwtTokenProvider implements InitializingBean {
                             log.info("issueRefreshToken method | change token ");
                         },
                         () -> {
-                            refreshToken token = refreshToken.createToken(authentication.getName(), newRefreshToken);
+                            RefreshToken token = RefreshToken.createToken(authentication.getName(), newRefreshToken);
                             log.info(" issueRefreshToken method | save tokenID : {}, token : {}", token.getUserId(), token.getToken());
                             refreshTokenRepository.save(token);
                         });
