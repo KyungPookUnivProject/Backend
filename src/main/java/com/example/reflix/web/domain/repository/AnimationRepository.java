@@ -14,8 +14,8 @@ public interface AnimationRepository extends JpaRepository<Animation,Long> {
 
     Animation findByContentsId(Long Id);
 
-    @Query("select new com.example.reflix.web.dto.ContentsRecommendResponseDto(m.contentsId,m.Name,m.ImageUrl,m.contentsCategory,0) from Animation m")
-    List<ContentsRecommendResponseDto> findAllByAniId(Iterable<Long> longs);
+    @Query("select new com.example.reflix.web.dto.ContentsRecommendResponseDto(m.contentsId,m.Name,m.ImageUrl,m.contentsCategory,0) from Animation m  where m.contentsId IN :longs and m.year > :startDate and m.year < :endDate")
+    List<ContentsRecommendResponseDto> findAllByAniId(Iterable<Long> longs,String startDate,String endDate);
 
     @Query("select a from Animation a where a.Name like :q")
     List<Animation> findByNameSearch(String q);

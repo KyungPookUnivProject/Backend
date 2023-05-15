@@ -48,8 +48,8 @@ public class Tvseris extends BaseTimeEntity {
     @OneToOne(mappedBy = "tvseris")
     private ContentsJanre janre;
 
-    @OneToMany(mappedBy = "tvseris")
-    private List<contentsKeword> kewordList = new ArrayList<>();
+    @OneToOne(mappedBy = "tvseris")
+    private contentsKeword kewordList;
 
     @OneToMany(mappedBy = "tvseris")
     private List<Review> reviewList = new ArrayList<>();

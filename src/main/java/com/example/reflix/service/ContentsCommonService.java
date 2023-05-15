@@ -2,9 +2,14 @@ package com.example.reflix.service;
 
 import com.example.reflix.config.auth.userAdapter;
 import com.example.reflix.web.domain.*;
+import com.example.reflix.web.domain.repository.ContentsJanreRepository;
+import com.example.reflix.web.domain.repository.ContentsKeywordRepository;
 import com.example.reflix.web.domain.repository.ContentsLikeListRepository;
 import com.example.reflix.web.domain.repository.RecomendContentsRepository;
 import com.example.reflix.web.dto.*;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
@@ -13,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
 
 @Service
@@ -22,6 +29,10 @@ public class ContentsCommonService{
 
     private final RecomendContentsRepository recomendContentsRepository;
     private final ContentsLikeListRepository contentsLikeListRepository;
+    private final ContentsJanreRepository contentsJanreRepository;
+    private final ContentsKeywordRepository contentsKeywordRepository;
+    private final static String URL ="https://image.tmdb.org/t/p/original";
+
 
     //콘텐츠상세조회
 //    public contentsDetailResponseDto contentdetail(Long contentId){
@@ -173,6 +184,35 @@ public class ContentsCommonService{
             }
     }
 
+    public List<Long> contentRecommend(Long contentsId,int category) {
+
+        List<String> commandList= new ArrayList<>();
+        List<Long> idArray = new LinkedList<>();
+        String command="python3";
+        commandList.add(command);
+        String result = null;
+        try{
+            switch (category){
+                case 0:
+//                    arg1 =  "/Users/gimjingwon/PycharmProjects/pythonProject1/completion/movie_recommend_genre.py";
+                    commandList.add(URL+"movie_recommend_genre.py");
+                    break;
+                case 1:
+                    commandList.add(URL+"tv_content_recommend.py");
+                    break;
+                case 2:
+                    commandList.add(URL+"animation_content_recommend.py");
+                    break;
+            }
+            commandList.add(contentsId.toString());
+            result = pythonEexc(commandList);
+            ObjectMapper mapper = new ObjectMapper();
+            idArray = Arrays.asList(mapper.readValue(result,TmbdIdDto[].class)).stream().map(TmbdIdDto::getTmdbid).toList();
+        }catch (Exception e){
+            log.error(e.getMessage());
+        }
+        return idArray;
+    }
     public void movieadd(MovieAddDto dto){
 //
 //        contents content = contents.builder()
@@ -218,10 +258,63 @@ public class ContentsCommonService{
     }
 
 
-    public void seacrhContent(){
+    public void savejanreKeyword(ContentsJanre janre,contentsKeword keword){
+        contentsJanreRepository.save(janre);
+        contentsKeywordRepository.save(keword);
+    }
+    public List<ContentsDetailDto> seacrhContent(String q) {
+        List<ContentsDetailDto> resultDtoList = new LinkedList<>();
+
+        try{
+            String searchQ ="https://api.themoviedb.org/3/search/multi?api_key=cb3fbd26fe7fe53cf8af0ba2b6d72370&language=ko-KR&query="+q;
+            URL url = new URL(searchQ);
+            BufferedReader bf = new BufferedReader(new InputStreamReader(url.openStream(), "UTF-8"));
+            String result = bf.readLine();
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, Object> jsonMap = mapper.readValue(result, new TypeReference<Map<String, Object>>() {});
+            List<Map<String, Object>> results = (List<Map<String, Object>>) jsonMap.get("results");
 
 
+            int count =0;
+            for(Map<String,Object> rid : results){
+                log.info(count++);
+                log.info(rid.toString());
+                String imageUrl = "";
+                if(rid.get("poster_path")!=null){
+                    imageUrl = rid.get("poster_path").toString();
+                }
+                Category category =Category.MOVIE;
+                if(rid.get("media_type").toString()=="tv"){
+                    category = Category.DRAMA;
+                }
+                log.info("category");
+                String name = null;
+                String year = null;
+                if(rid.containsKey("name")){
+                    name = rid.get("name").toString();
+                    year = rid.get("first_air_date").toString();
+                    log.info("name");
+                }
+                else{
+                    name = rid.get("title").toString();
+                    year = rid.get("release_date").toString();
 
+                    log.info("title");
+                }
+                ContentsDetailDto dtos = ContentsDetailDto.builder()
+                        .contentsId(Long.parseLong(rid.get("id").toString()))
+                        .contentName(name)
+                        .contentImageUrl(URL+imageUrl)
+                        .contentsCategory(category)
+                        .year(year)
+                        .build();
+                log.info(dtos);
+                resultDtoList.add(dtos);
+            }
+        }
+        catch (Exception e){
+            log.info(e.getMessage());
+        }
 
         //일단 제목과 일치하는
         //이차로 제목과 일치하는 영화와 비슷한 콘텐츠 파이썬 이용
@@ -229,6 +322,7 @@ public class ContentsCommonService{
 
         //
 //        contentsRepository.findAllBy
+        return resultDtoList;
 
     }
 

@@ -1,6 +1,7 @@
 package com.example.reflix.service;
 
 import com.example.reflix.config.auth.userAdapter;
+import com.example.reflix.web.domain.Contents;
 import com.example.reflix.web.dto.*;
 
 import java.io.IOException;
@@ -12,6 +13,7 @@ public interface contentsService {
 //    public void recomendContentsSave(List<recommendContentsDto> contentsList, Long userId);
     public List<ContentsRecommendResponseDto> submit(ContentsFavoriteRequestDto contentFavoriteDto, userAdapter userPrincipal) throws IOException;
     public List<ContentsDetailDto> search(String q);
+    public List<?> getAll(List<Long> list);
 
 
     }

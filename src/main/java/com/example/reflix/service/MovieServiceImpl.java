@@ -5,17 +5,20 @@ import com.example.reflix.web.domain.*;
 import com.example.reflix.web.domain.repository.ContentsLikeListRepository;
 import com.example.reflix.web.domain.repository.MovieRepository;
 import com.example.reflix.web.dto.*;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.models.auth.In;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -25,12 +28,23 @@ public class MovieServiceImpl implements contentsService{
     private final MovieRepository movieRepository;
     private final ContentsLikeListRepository contentsLikeListRepository;
     private final ContentsCommonService contentsService;
+    private final String KEY ="cb3fbd26fe7fe53cf8af0ba2b6d72370";
+
     //콘텐츠상세조회
     @Override
     @Transactional
     public ContentsDetailResponseDto contentdetail(Long contentId){
-        Movie contents = movieRepository.findByContentsId(contentId);
+        Optional<Movie> OptionalContents = movieRepository.findByContentsId(contentId);
+        Movie contents= new Movie();
+        OptionalContents.orElse(contents);
+
         Long likelist = contentsLikeListRepository.countByContentId(contentId);
+        if(OptionalContents.isPresent()==false){
+            contents = saves(contentId);
+        }else{
+            contents = OptionalContents.get();
+        }
+
         ContentsDetailResponseDto resultdto = ContentsDetailResponseDto.builder()
                 .contentImageUrl(contents.getImageUrl())
                 .contentName(contents.getName())
@@ -51,15 +65,15 @@ public class MovieServiceImpl implements contentsService{
     @Override
     public List<ContentsRecommendResponseDto> submit(ContentsFavoriteRequestDto contentFavoriteDto, userAdapter userPrincipal) throws IOException {
         String command = "python3";
-        String arg1 = "/Users/gimjingwon/PycharmProjects/pythonProject1/completion/movie_recommend_genre.py";
-        List<ContentsRecommendResponseDto> contentsList= new ArrayList<>();
+        String arg1 = "/Users/gimjingwon/PycharmProjects/pythonProject1/completion/movie_keyword_recommend.py";
+        List<ContentsRecommendResponseDto> contentsList= new LinkedList<>();
         List<String> pyrequestList = new ArrayList<>();
+
+
         pyrequestList.add(command);
         pyrequestList.add(arg1);
-//        pyrequestList.add(contentFavoriteDto.getCategory().name());
         pyrequestList.add(contentFavoriteDto.getJangre());
-//        pyrequestList.add(contentFavoriteDto.getKeword());
-//        pyrequestList.add(contentFavoriteDto.getYear());
+        pyrequestList.add(contentFavoriteDto.getKeword());
         String contentString= contentsService.pythonEexc(pyrequestList);
         if(contentString!=null){
             ObjectMapper mapper = new ObjectMapper();
@@ -68,10 +82,17 @@ public class MovieServiceImpl implements contentsService{
             for(SimilarContentsDto dto : list){
                 idlist.add(dto.getTmdbId());
             }
-            contentsList = movieRepository.findAllBymovieId(idlist);
+            int IntstartDate = Integer.parseInt(contentFavoriteDto.getYear().toString().substring(0,4));
+            int IntendDate = IntstartDate+10;
+            String startDate = String.valueOf(IntstartDate)+"-01-01";
+            String endDate = String.valueOf(IntendDate)+"-01-01";
+            contentsList = movieRepository.findAllBymovieId(idlist,startDate,endDate);
+            log.info("size+ ; "+contentsList.size());
+            if(contentsList.size()==0){
+                return contentsList;
+            }
             for(int i=0;i<contentsList.size();i++){
                 contentsList.get(i).setSimir(90);
-//                contentsList.get(i).setSimir(list.get(i).getSimilarity());
             }
             contentsService.recomendContentsSave(contentsList,userPrincipal.getId());
             return contentsList;
@@ -101,6 +122,10 @@ public class MovieServiceImpl implements contentsService{
         return resultList;
     }
 
+    public List<Movie> getAll(List<Long> idList){
+        return movieRepository.findAllById(idList);
+    }
+
     public List<ContentsDetailDto> getmovieten(){
         List<Movie> list = movieRepository.findAll(PageRequest.of(0, 10)).getContent();
         List<ContentsDetailDto> resultList = new ArrayList<>();
@@ -115,5 +140,62 @@ public class MovieServiceImpl implements contentsService{
             resultList.add(dto);
         }
         return  resultList;
+    }
+    public List<Long> getIdlist(){
+        return movieRepository.findAllId();
+    }
+
+    @Transactional
+    public void save(Movie movie){
+         movieRepository.save(movie);
+
+    }
+
+
+    @Transactional
+    public Movie saves(Long contentsId){
+        String firstImage = "https://image.tmdb.org/t/p/original";
+        Movie movie = null;
+
+        try {
+            String kewordUrl = "https://api.themoviedb.org/3/movie/" + contentsId + "?api_key=" + KEY + "&language=ko-KR&append_to_response=keywords";
+            URL url = new URL(kewordUrl);
+            BufferedReader bf = new BufferedReader(new InputStreamReader(url.openStream(), "UTF-8"));
+            String result = bf.readLine();
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String,Object> jsonMap = mapper.readValue(result, new TypeReference<Map<String, Object>>() {
+            });
+
+            Object posterPath = jsonMap.get("poster_path");
+            if(posterPath==null){
+                posterPath=null;
+            }
+            else{
+                posterPath=posterPath.toString();
+            }
+            movie = Movie.builder()
+                    .contentsId(contentsId)
+                    .year(jsonMap.get("release_date").toString())
+                    .story(jsonMap.get("overview").toString())
+                    .runnigTime(jsonMap.get("runtime").toString())
+                    .likelist(0)
+                    .Name(jsonMap.get("title").toString())
+                    .contentsCategory(Category.MOVIE)
+                    .ImageUrl(firstImage+posterPath)
+                    .grade(jsonMap.get("adult").toString())
+                    .build();
+            log.info(result);
+        }catch (Exception e) {
+        }
+        movieRepository.save(movie);
+        return movie;
+
+    }
+//    public void setKey(){
+//        movieRepository.setKey();
+//    };
+
+    public Movie getId(Long Id){
+        return movieRepository.findByContentsId(Id).get();
     }
 }

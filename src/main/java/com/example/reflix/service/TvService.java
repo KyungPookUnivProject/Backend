@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 @Service
@@ -51,15 +52,13 @@ public class TvService implements contentsService{
     @Override
     public List<ContentsRecommendResponseDto> submit(ContentsFavoriteRequestDto contentFavoriteDto, userAdapter userPrincipal) throws IOException {
         String command = "python3";
-        String arg1 = "/Users/gimjingwon/PycharmProjects/pythonProject1/completion/tv_genre_recommend.py";
-        List<ContentsRecommendResponseDto> contentsList= new ArrayList<>();
+        String arg1 = "/Users/gimjingwon/PycharmProjects/pythonProject1/completion/tv_keywords_recommend.py";
+        List<ContentsRecommendResponseDto> contentsList= new LinkedList<>();
         List<String> pyrequestList = new ArrayList<>();
         pyrequestList.add(command);
         pyrequestList.add(arg1);
-//        pyrequestList.add(contentFavoriteDto.getCategory().name());
         pyrequestList.add(contentFavoriteDto.getJangre());
-//        pyrequestList.add(contentFavoriteDto.getKeword());
-//        pyrequestList.add(contentFavoriteDto.getYear());
+        pyrequestList.add(contentFavoriteDto.getKeword());
         String contentString= contentsService.pythonEexc(pyrequestList);
         if(contentString!=null){
             ObjectMapper mapper = new ObjectMapper();
@@ -68,10 +67,18 @@ public class TvService implements contentsService{
             for(SimilarContentsDto dto : list){
                 idlist.add(dto.getTmdbId());
             }
-            contentsList = TvRepository.findAllByTvId(idlist);
+
+            int IntstartDate = Integer.parseInt(contentFavoriteDto.getYear().toString().substring(0,4));
+            int IntendDate = IntstartDate+10;
+            String startDate = String.valueOf(IntstartDate)+"-01-01";
+            String endDate = String.valueOf(IntendDate)+"-01-01";
+            contentsList = TvRepository.findAllByTvId(idlist,startDate,endDate);
+            log.info("size+ ; "+contentsList.size());
+            if(contentsList.size()==0){
+                return contentsList;
+            }
             for(int i=0;i<contentsList.size();i++){
                 contentsList.get(i).setSimir(90);
-//                contentsList.get(i).setSimir(list.get(i).getSimilarity());
             }
             contentsService.recomendContentsSave(contentsList,userPrincipal.getId());
             return contentsList;
@@ -136,5 +143,9 @@ public class TvService implements contentsService{
             resultList.add(dto);
         }
         return resultList;
+    }
+
+    public List<Tvseris> getAll(List<Long> idList){
+        return TvRepository.findAllById(idList);
     }
 }

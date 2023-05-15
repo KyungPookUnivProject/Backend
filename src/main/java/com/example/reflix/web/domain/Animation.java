@@ -50,8 +50,8 @@ public class Animation extends BaseTimeEntity {
     @OneToOne(mappedBy = "animation")
     private ContentsJanre janre;
 
-    @OneToMany(mappedBy = "animation")
-    private List<contentsKeword> kewordList = new ArrayList<>();
+    @OneToOne(mappedBy = "animation")
+    private contentsKeword kewordList;
 
     @OneToMany(mappedBy = "animation")
     private List<Review> reviewList = new ArrayList<>();

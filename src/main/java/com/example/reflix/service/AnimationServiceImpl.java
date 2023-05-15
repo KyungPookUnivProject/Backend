@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 @Service
@@ -50,15 +51,14 @@ public class AnimationServiceImpl implements contentsService{
     @Override
     public List<ContentsRecommendResponseDto> submit(ContentsFavoriteRequestDto contentFavoriteDto, userAdapter userPrincipal) throws IOException {
         String command = "python3";
-        String arg1 = "/Users/gimjingwon/PycharmProjects/pythonProject1/completion/animation_ganre_recommend.py";
-        List<ContentsRecommendResponseDto> contentsList= new ArrayList<>();
+        String arg1 = "/Users/gimjingwon/PycharmProjects/pythonProject1/completion/animation_keyword_recommend.py";
+        List<ContentsRecommendResponseDto> contentsList= new LinkedList<>();
         List<String> pyrequestList = new ArrayList<>();
+
         pyrequestList.add(command);
         pyrequestList.add(arg1);
-//        pyrequestList.add(contentFavoriteDto.getCategory().name());
         pyrequestList.add(contentFavoriteDto.getJangre());
-//        pyrequestList.add(contentFavoriteDto.getKeword());
-//        pyrequestList.add(contentFavoriteDto.getYear());
+        pyrequestList.add(contentFavoriteDto.getKeword());
         String contentString= contentsService.pythonEexc(pyrequestList);
         if(contentString!=null){
             ObjectMapper mapper = new ObjectMapper();
@@ -66,11 +66,17 @@ public class AnimationServiceImpl implements contentsService{
             List<SimilarContentsDto> list = Arrays.asList(mapper.readValue(contentString, SimilarContentsDto[].class));
             for(SimilarContentsDto dto : list){
                 idlist.add(dto.getTmdbId());
+            }int IntstartDate = Integer.parseInt(contentFavoriteDto.getYear().toString().substring(0,4));
+            int IntendDate = IntstartDate+10;
+            String startDate = String.valueOf(IntstartDate)+"-01-01";
+            String endDate = String.valueOf(IntendDate)+"-01-01";
+            contentsList = aniRepository.findAllByAniId(idlist,startDate,endDate);
+
+            if(contentsList.size()==0){
+                return contentsList;
             }
-            contentsList = aniRepository.findAllByAniId(idlist);
             for(int i=0;i<contentsList.size();i++){
                 contentsList.get(i).setSimir(90);
-//                contentsList.get(i).setSimir(list.get(i).getSimilarity());
             }
             contentsService.recomendContentsSave(contentsList,userPrincipal.getId());
             return contentsList;
@@ -133,5 +139,9 @@ public class AnimationServiceImpl implements contentsService{
             resultList.add(dto);
         }
         return resultList;
+    }
+
+    public List<Animation> getAll(List<Long> idList){
+        return aniRepository.findAllById(idList);
     }
 }

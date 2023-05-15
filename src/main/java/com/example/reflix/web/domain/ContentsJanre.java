@@ -37,4 +37,10 @@ public class ContentsJanre extends BaseTimeEntity {
     @OneToOne
     @JoinColumn(name = "animationId", insertable = false, updatable = false)
     private Animation animation;
+
+    @Column
+    private Long movieId;
+    private Long tvserisId;
+    private Long animationId;
+
 }

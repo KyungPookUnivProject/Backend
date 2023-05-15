@@ -1,7 +1,10 @@
 package com.example.reflix.config.auth;
 
 import lombok.extern.log4j.Log4j2;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -10,6 +13,9 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 import static com.example.reflix.config.auth.JwtTokenProvider.*;
 
@@ -29,7 +35,6 @@ public class jwtTokenFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String jwt = resolveToken(request, AUTHORIZATION_HEADER);
-
         if (jwt != null && jwtTokenProvider.validateToken(jwt)== JwtCode.ACCESS) {
             Authentication authentication = jwtTokenProvider.getAuthentication(jwt);
             SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -47,12 +52,17 @@ public class jwtTokenFilter extends OncePerRequestFilter {
                     Authentication authentication = jwtTokenProvider.getAuthentication(refresh);
                     response.setHeader(AUTHORIZATION_HEADER, "Bearer-"+jwtTokenProvider.createAccessToken(authentication));
                     SecurityContextHolder.getContext().setAuthentication(authentication);
+                    List<GrantedAuthority> authorities = Arrays.asList(new SimpleGrantedAuthority("ROLE_ANONYMOUS"));
+
+// 인증 토큰 생
+                    Authentication token = new AnonymousAuthenticationToken("key","anonymousUser",authorities);
+                    SecurityContextHolder.getContext().setAuthentication(token);
                     log.info("reissue refresh Token & access Token");
                 }
             }
         }
         else {
-            log.info("no valid JWT token found, uri: {}", request.getRequestURI());
+            log.info("no valid JWT token found, uri: {}, authi :{}", request.getRequestURI(),SecurityContextHolder.getContext().getAuthentication());
         }
 
         filterChain.doFilter(request, response);

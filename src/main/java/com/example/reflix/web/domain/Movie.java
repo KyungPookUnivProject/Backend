@@ -14,7 +14,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Movie extends BaseTimeEntity {
+public class Movie extends BaseTimeEntity implements Contents{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -44,12 +44,11 @@ public class Movie extends BaseTimeEntity {
     @Column(nullable = true)
     private String story;
 
-
-    @OneToOne(mappedBy = "movie")
+    @OneToOne(mappedBy = "movie",cascade = CascadeType.ALL)
     private ContentsJanre janre;
 
-    @OneToMany(mappedBy = "movie")
-    private List<contentsKeword> kewordList = new ArrayList<>();
+    @OneToOne(mappedBy = "movie",cascade = CascadeType.ALL)
+    private contentsKeword kewordList;
 
     @OneToMany(mappedBy = "movie")
     private List<Review> reviewList = new ArrayList<>();
