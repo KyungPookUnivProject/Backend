@@ -32,6 +32,7 @@ public class ContentsCommonService{
     private final ContentsJanreRepository contentsJanreRepository;
     private final ContentsKeywordRepository contentsKeywordRepository;
     private final static String URL ="https://image.tmdb.org/t/p/original";
+    private final static String PYURL ="/Users/gimjingwon/PycharmProjects/pythonProject1/completion/";
 
 
     //콘텐츠상세조회
@@ -158,19 +159,16 @@ public class ContentsCommonService{
 //    }
 
 
-    public boolean contentLike(Long contentId,int category,userAdapter user){
+    public boolean contentLike(Long contentId,Category category,userAdapter user){
             Category category1 = null;
-            switch (category){
-                case 0: category1= Category.MOVIE; break;
-                case 1: category1 = Category.DRAMA;break;
-                case 2: category1 = Category.ANIMATION; break;
-            }
             ContentsLikeList list = ContentsLikeList.builder()
                     .contentId(contentId)
                     .user(user.getUser())
-                    .category(category1)
+                    .category(category)
                     .build();
             contentsLikeListRepository.save(list);
+
+
             return true;
     }
 
@@ -184,84 +182,72 @@ public class ContentsCommonService{
             }
     }
 
-    public List<Long> contentRecommend(Long contentsId,int category) {
+    public List<Long> contentRecommend(String genre,Category category) {
 
         List<String> commandList= new ArrayList<>();
         List<Long> idArray = new LinkedList<>();
         String command="python3";
         commandList.add(command);
+        log.info(genre);
         String result = null;
+
+        switch (genre){
+            case "드라마": genre = "Drama"; break;
+            case "범죄": genre = "Crime";break;
+            case "액션": genre = "Action";break;
+            case "모험": genre = "Adventure";break;
+            case "애니메이션": genre = "Animation";break;
+            case "코미디": genre = "Comedy";break;
+            case "미스터리": genre = "Mystery";break;
+            case "다큐멘터리": genre = "Documentary";break;
+            case "서부": genre = "Western";break;
+            case "SF": genre = "Sci-Fi";break;
+            case "스릴러": genre = "Thriller";break;
+            case "로맨스": genre = "Romance";break;
+            case "공포": genre = "Horror";break;
+            case "판타지": genre = "Fantasy";break;
+            case "가족": genre = "Children";break;
+            case "역사": genre = "War";break;
+            case "음악": genre = "Musical";break;
+            case "전쟁": genre = "War";break;
+        }
         try{
-            switch (category){
-                case 0:
-//                    arg1 =  "/Users/gimjingwon/PycharmProjects/pythonProject1/completion/movie_recommend_genre.py";
-                    commandList.add(URL+"movie_recommend_genre.py");
+            switch (category.name()){
+                case "MOVIE":
+                    commandList.add(PYURL+"movie_recommend_genre.py");
                     break;
-                case 1:
-                    commandList.add(URL+"tv_content_recommend.py");
+                case "DRAMA":
+                    commandList.add(PYURL+"tv_content_recommend.py ");
                     break;
-                case 2:
-                    commandList.add(URL+"animation_content_recommend.py");
+                case "ANIMATION":
+                    commandList.add(PYURL+"animation_content_recommend.py ");
                     break;
             }
-            commandList.add(contentsId.toString());
+            commandList.add(genre);
             result = pythonEexc(commandList);
             ObjectMapper mapper = new ObjectMapper();
-            idArray = Arrays.asList(mapper.readValue(result,TmbdIdDto[].class)).stream().map(TmbdIdDto::getTmdbid).toList();
+            log.info(result);
+            idArray = Arrays.asList(mapper.readValue(result,TmdbIdRecomndDto[].class)).stream().map(TmdbIdRecomndDto::getTmdbId).toList();
         }catch (Exception e){
             log.error(e.getMessage());
         }
         return idArray;
     }
-    public void movieadd(MovieAddDto dto){
-//
-//        contents content = contents.builder()
-//                .contentName(dto.getContentName())
-//                .year(dto.getYear())
-//                .runnigTime(dto.getRunnigTime())
-//                .contentImageUrl(dto.getContentImageUrl())
-//                .contentsCategory(category.MOVIE)
-//                .story(dto.getStory())
-//                .grade("grade")
-//                .build();
-//
-//        contentsRepository.save(content);
-        return;
-
-    }
-
-    public List<ContentsDetailDto> getmovieten(){
-//        List<contents> contnetslist = new ArrayList<>();
-//        log.info("뽑기전 "+contnetslist.size());
-//
-//        contnetslist=contentsRepository.findAll();
-//
-//        log.info("뽑고나서 "+contnetslist.size());
-        List <ContentsDetailDto> returnlist = new ArrayList<>();
-//        for(contents rid : contnetslist){
-//            if(returnlist.size()==10){
-//                break;
-//            }
-//            contentsDetailDto dto = contentsDetailDto.builder()
-//                    .contentImageUrl(rid.getContentImageUrl())
-//                    .contentName(rid.getContentName())
-//                    .contentsCategory(rid.getContentsCategory())
-//                    .contentsId(rid.getContentsId())
-//                    .year(rid.getYear())
-//                    .build();
-//            returnlist.add(dto);
-//        }
-////        List <contentsDetailDto> returnlist = contnetslist.stream().map(contentsDetailDto::new).collect(Collectors.toList());
-//
-//
-        return returnlist;
-    }
-
 
     public void savejanreKeyword(ContentsJanre janre,contentsKeword keword){
         contentsJanreRepository.save(janre);
         contentsKeywordRepository.save(keword);
     }
+    public void saveJlist(List<ContentsJanre> list){
+        contentsJanreRepository.saveAll(list);
+    }
+    public void saveKlist(List<contentsKeword> list){
+        contentsKeywordRepository.saveAll(list);
+    }
+
+
+
+
     public List<ContentsDetailDto> seacrhContent(String q) {
         List<ContentsDetailDto> resultDtoList = new LinkedList<>();
 
@@ -303,8 +289,8 @@ public class ContentsCommonService{
                 }
                 ContentsDetailDto dtos = ContentsDetailDto.builder()
                         .contentsId(Long.parseLong(rid.get("id").toString()))
-                        .contentName(name)
-                        .contentImageUrl(URL+imageUrl)
+                        .Name(name)
+                        .ImageUrl(URL+imageUrl)
                         .contentsCategory(category)
                         .year(year)
                         .build();
@@ -327,6 +313,32 @@ public class ContentsCommonService{
     }
 
 
+    public String getGenre(Long id,Category category){
+
+        ContentsJanre jar = null;
+        String genre = "Drama";
+        switch (category.name()){
+            case "MOVIE":
+                jar = contentsJanreRepository.findByMovieId(id);
+                if(jar.getJanre1()!=null || jar.getJanre1()!=""){
+                    genre= jar.getJanre1();
+                }
+                return genre;
+            case "DRAMA":
+                jar = contentsJanreRepository.findByTvserisId(id);
+                if(jar.getJanre1()!=null || jar.getJanre1()!=""){
+                    genre= jar.getJanre1();
+                }
+                return genre;
+            case "ANIMATION":
+                jar = contentsJanreRepository.findByAnimationId(id);
+                if(jar.getJanre1()!=null || jar.getJanre1()!=""){
+                    genre= jar.getJanre1();
+                }
+                return genre;
+            default: return genre;
+        }
+    }
     public String movieCrowling() {
 //
 //        String command = "python3";

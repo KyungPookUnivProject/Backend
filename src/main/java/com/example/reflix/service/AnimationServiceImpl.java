@@ -30,7 +30,8 @@ public class AnimationServiceImpl implements contentsService{
     @Transactional
     public ContentsDetailResponseDto contentdetail(Long contentId){
         Animation contents = aniRepository.findByContentsId(contentId);
-        Long likelist = contentsLikeListRepository.countByContentId(contentId);
+//        Long likelist = contentsLikeListRepository.countByContentId(contentId);
+        Long likelist = Long.valueOf(contents.getLikelist());
         ContentsDetailResponseDto resultdto = ContentsDetailResponseDto.builder()
                 .contentImageUrl(contents.getImageUrl())
                 .contentName(contents.getName())
@@ -38,8 +39,10 @@ public class AnimationServiceImpl implements contentsService{
                 .contentsCategory(contents.getContentsCategory())
                 .year(contents.getYear())
                 .grade(contents.getGrade())
-                .janre(contents.getJanre().getJanre1())
+                .genreList(new LinkedList<GenreListResponseDto>())
+                .kewordList(new LinkedList<KeywordListResponseDto>())
                 .story(contents.getStory())
+                .runnigTime(contents.getRunnigTime())
                 .likelist(likelist)
                 .build();
         return resultdto;
@@ -57,8 +60,8 @@ public class AnimationServiceImpl implements contentsService{
 
         pyrequestList.add(command);
         pyrequestList.add(arg1);
-        pyrequestList.add(contentFavoriteDto.getJangre());
-        pyrequestList.add(contentFavoriteDto.getKeword());
+        pyrequestList.add(contentFavoriteDto.getGenreAsString());
+        pyrequestList.add(contentFavoriteDto.getKeywordAsString());
         String contentString= contentsService.pythonEexc(pyrequestList);
         if(contentString!=null){
             ObjectMapper mapper = new ObjectMapper();
@@ -66,7 +69,7 @@ public class AnimationServiceImpl implements contentsService{
             List<SimilarContentsDto> list = Arrays.asList(mapper.readValue(contentString, SimilarContentsDto[].class));
             for(SimilarContentsDto dto : list){
                 idlist.add(dto.getTmdbId());
-            }int IntstartDate = Integer.parseInt(contentFavoriteDto.getYear().toString().substring(0,4));
+            }int IntstartDate = Integer.parseInt(contentFavoriteDto.getYear().toString().substring(1,5));
             int IntendDate = IntstartDate+10;
             String startDate = String.valueOf(IntstartDate)+"-01-01";
             String endDate = String.valueOf(IntendDate)+"-01-01";
@@ -78,7 +81,7 @@ public class AnimationServiceImpl implements contentsService{
             for(int i=0;i<contentsList.size();i++){
                 contentsList.get(i).setSimir(90);
             }
-            contentsService.recomendContentsSave(contentsList,userPrincipal.getId());
+//            contentsService.recomendContentsSave(contentsList,userPrincipal.getId());
             return contentsList;
         }
         else{
@@ -132,8 +135,8 @@ public class AnimationServiceImpl implements contentsService{
         for(Animation rid : list){
             ContentsDetailDto dto  = ContentsDetailDto.builder()
                     .contentsId(rid.getContentsId())
-                    .contentName(rid.getName())
-                    .contentImageUrl(rid.getImageUrl())
+                    .Name(rid.getName())
+                    .ImageUrl(rid.getImageUrl())
                     .contentsCategory(rid.getContentsCategory())
                     .year(rid.getYear()).build();
             resultList.add(dto);
@@ -141,7 +144,26 @@ public class AnimationServiceImpl implements contentsService{
         return resultList;
     }
 
+
+    @Override
+    public void setContnets(Long ContentsId,int flag) {
+        Animation movie = aniRepository.findById(ContentsId).get();
+        if(flag==1){
+            movie.setLikelist(movie.getLikelist()+1);
+        }
+        else{
+            movie.setLikelist(movie.getLikelist()-1);
+        }
+        aniRepository.save(movie);
+    }
+
     public List<Animation> getAll(List<Long> idList){
         return aniRepository.findAllById(idList);
     }
+
+
+    public List<Long> getIdlist(){
+        return aniRepository.findAllId();
+    }
+
 }

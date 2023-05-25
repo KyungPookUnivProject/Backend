@@ -14,6 +14,7 @@ public interface contentsService {
     public List<ContentsRecommendResponseDto> submit(ContentsFavoriteRequestDto contentFavoriteDto, userAdapter userPrincipal) throws IOException;
     public List<ContentsDetailDto> search(String q);
     public List<?> getAll(List<Long> list);
+    public void setContnets(Long ContentsId, int flag);
 
 
     }

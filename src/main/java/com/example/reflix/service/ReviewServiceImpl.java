@@ -1,6 +1,7 @@
 package com.example.reflix.service;
 
 import com.example.reflix.config.auth.userAdapter;
+import com.example.reflix.web.domain.Category;
 import com.example.reflix.web.domain.Review;
 import com.example.reflix.web.domain.ReviewLookList;
 import com.example.reflix.web.domain.User;
@@ -25,12 +26,12 @@ public class ReviewServiceImpl {
     private final ReviewLookListRepository reviewLookListRepository;
 
     @Transactional
-    public List<ReviewResponseDto> reviewrecomend(Long contentId, int category){
+    public List<ReviewResponseDto> reviewrecomend(Long contentId, Category category){
         List<Review> reviewlist = new ArrayList<>();
-        switch (category){
-            case 0: reviewlist = reviewRepository.findAllByMovieId(contentId);break;
-            case 1: reviewlist = reviewRepository.findAllByTvserisId(contentId); break;
-            case 2: reviewlist = reviewRepository.findAllByAnimationId(contentId); break;
+        switch (category.name()){
+            case "MOVIE": reviewlist = reviewRepository.findAllByMovieId(contentId);break;
+            case "DRAMA": reviewlist = reviewRepository.findAllByTvserisId(contentId); break;
+            case "ANIMATION": reviewlist = reviewRepository.findAllByAnimationId(contentId); break;
         }
 //        List<review> reviewlist = reviewRepository.findAllByContentId(contentId);
 
@@ -45,10 +46,10 @@ public class ReviewServiceImpl {
                     .videoId(rid.getReviewvideoUrl())
                     .reviewName(rid.getContentName())
                     .build();
-            switch (category){
-                case 0: dto.setContentId(rid.getMovieId()); break;
-                case 1: dto.setContentId(rid.getTvserisId());break;
-                case 2: dto.setContentId(rid.getAnimationId());break;
+            switch (category.name()){
+                case "MOVIE": dto.setContentId(rid.getMovieId()); break;
+                case "DRAMA": dto.setContentId(rid.getTvserisId());break;
+                case "ANIMATION" : dto.setContentId(rid.getAnimationId());break;
             }
             returnReviewList.add(dto);
         }
@@ -56,7 +57,7 @@ public class ReviewServiceImpl {
     }
 
     @Transactional
-    public void reviewSave(List<ReviewResponseDto> dtolist, int category){
+    public void reviewSave(List<ReviewResponseDto> dtolist, Category category){
         List<Review> reviewList = new ArrayList<>();
         for(ReviewResponseDto dto : dtolist){
             Review saveReivew =  Review.builder()
@@ -65,12 +66,12 @@ public class ReviewServiceImpl {
                     .reviewvideoUrl(dto.getVideoId())
                     .view(dto.getView())
                     .build();
-            switch (category) {
-                case 0:
+            switch (category.name()) {
+                case "MOVIE":
                     saveReivew.setMovieId(dto.getContentId()); break;
-                case 1:
+                case "DRAMA":
                     saveReivew.setTvserisId(dto.getContentId());break;
-                case 2:
+                case "ANIMATION":
                     saveReivew.setAnimationId(dto.getContentId());break;
             }
             reviewList.add(saveReivew);

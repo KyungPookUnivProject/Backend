@@ -7,7 +7,6 @@ import com.example.reflix.web.domain.repository.MovieRepository;
 import com.example.reflix.web.dto.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.swagger.models.auth.In;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.PageRequest;
@@ -18,6 +17,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.text.DateFormat;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -38,13 +39,39 @@ public class MovieServiceImpl implements contentsService{
         Movie contents= new Movie();
         OptionalContents.orElse(contents);
 
-        Long likelist = contentsLikeListRepository.countByContentId(contentId);
+//        Long likelist = contentsLikeListRepository.countByContentId(contentId);
+        Long likelist = Long.valueOf(contents.getLikelist());
         if(OptionalContents.isPresent()==false){
             contents = saves(contentId);
         }else{
             contents = OptionalContents.get();
         }
 
+        ContentsJanre janre = contents.getJanre();
+        contentsKeword keword = contents.getKewordList();
+        List<GenreListResponseDto> JanreList = new LinkedList<>();
+        List<KeywordListResponseDto> KeywordList = new LinkedList<>();
+
+        if(JanreList.size()>=1){
+            for (int i = 1; i <= 5; i++) {
+                String jarne = janre.getContentsJarne(i);
+                if (jarne != null) {
+                    JanreList.add(new GenreListResponseDto(jarne));
+                }
+                else{
+                    break;
+                }
+            }
+        }
+        for (int i = 1; i <= 10; i++) {
+            String keyword = keword.getKeyword(i);
+            if (keyword != null) {
+                KeywordList.add(new KeywordListResponseDto(keyword));
+            }
+            else{
+                break;
+            }
+        }
         ContentsDetailResponseDto resultdto = ContentsDetailResponseDto.builder()
                 .contentImageUrl(contents.getImageUrl())
                 .contentName(contents.getName())
@@ -52,10 +79,11 @@ public class MovieServiceImpl implements contentsService{
                 .contentsCategory(contents.getContentsCategory())
                 .year(contents.getYear())
                 .grade(contents.getGrade())
-                .janre("test data없음")
-//                .janre(contents.getJanre().getJanre1())
+                .genreList(JanreList)
+                .kewordList(KeywordList)
                 .story(contents.getStory())
                 .likelist(likelist)
+                .runnigTime(contents.getRunnigTime())
                 .build();
         return resultdto;
     }
@@ -66,14 +94,14 @@ public class MovieServiceImpl implements contentsService{
     public List<ContentsRecommendResponseDto> submit(ContentsFavoriteRequestDto contentFavoriteDto, userAdapter userPrincipal) throws IOException {
         String command = "python3";
         String arg1 = "/Users/gimjingwon/PycharmProjects/pythonProject1/completion/movie_keyword_recommend.py";
+        contentFavoriteDto.getGenre();
         List<ContentsRecommendResponseDto> contentsList= new LinkedList<>();
         List<String> pyrequestList = new ArrayList<>();
 
-
         pyrequestList.add(command);
         pyrequestList.add(arg1);
-        pyrequestList.add(contentFavoriteDto.getJangre());
-        pyrequestList.add(contentFavoriteDto.getKeword());
+        pyrequestList.add(contentFavoriteDto.getGenreAsString());
+        pyrequestList.add(contentFavoriteDto.getKeywordAsString());
         String contentString= contentsService.pythonEexc(pyrequestList);
         if(contentString!=null){
             ObjectMapper mapper = new ObjectMapper();
@@ -82,7 +110,7 @@ public class MovieServiceImpl implements contentsService{
             for(SimilarContentsDto dto : list){
                 idlist.add(dto.getTmdbId());
             }
-            int IntstartDate = Integer.parseInt(contentFavoriteDto.getYear().toString().substring(0,4));
+            int IntstartDate = Integer.parseInt(contentFavoriteDto.getYear().toString().substring(1,5));
             int IntendDate = IntstartDate+10;
             String startDate = String.valueOf(IntstartDate)+"-01-01";
             String endDate = String.valueOf(IntendDate)+"-01-01";
@@ -94,7 +122,7 @@ public class MovieServiceImpl implements contentsService{
             for(int i=0;i<contentsList.size();i++){
                 contentsList.get(i).setSimir(90);
             }
-            contentsService.recomendContentsSave(contentsList,userPrincipal.getId());
+//            contentsService.recomendContentsSave(contentsList,userPrincipal.getId());
             return contentsList;
         }
         else{
@@ -113,13 +141,23 @@ public class MovieServiceImpl implements contentsService{
         for(Movie rid : list){
             ContentsDetailDto dto  = ContentsDetailDto.builder()
                     .contentsId(rid.getContentsId())
-                    .contentName(rid.getName())
-                    .contentImageUrl(rid.getImageUrl())
+                    .Name(rid.getName())
+                    .ImageUrl(rid.getImageUrl())
                     .contentsCategory(rid.getContentsCategory())
                     .year(rid.getYear()).build();
             resultList.add(dto);
         }
         return resultList;
+    }
+
+    public void getmovie(){
+
+        Optional<Movie> movie = movieRepository.findByContentsId(15L);
+        Movie contents = movie.get();
+        log.info("장르는 "+contents.getJanre().getJanre1());
+        log.info("키워드는 "+contents.getKewordList().getKeyword1());
+        log.info("이름은 "+contents.getName());
+
     }
 
     public List<Movie> getAll(List<Long> idList){
@@ -129,12 +167,14 @@ public class MovieServiceImpl implements contentsService{
     public List<ContentsDetailDto> getmovieten(){
         List<Movie> list = movieRepository.findAll(PageRequest.of(0, 10)).getContent();
         List<ContentsDetailDto> resultList = new ArrayList<>();
+        log.info(list.size());
 
         for(Movie rid : list){
+            log.info(rid);
             ContentsDetailDto dto  = ContentsDetailDto.builder()
                     .contentsId(rid.getContentsId())
-                    .contentName(rid.getName())
-                    .contentImageUrl(rid.getImageUrl())
+                    .Name(rid.getName())
+                    .ImageUrl(rid.getImageUrl())
                     .contentsCategory(rid.getContentsCategory())
                     .year(rid.getYear()).build();
             resultList.add(dto);
@@ -151,6 +191,10 @@ public class MovieServiceImpl implements contentsService{
 
     }
 
+    public List<Long> now(){
+        LocalDateTime dateTime;
+        return movieRepository.findNowId("2023-05-23");
+    }
 
     @Transactional
     public Movie saves(Long contentsId){
@@ -191,11 +235,23 @@ public class MovieServiceImpl implements contentsService{
         return movie;
 
     }
-//    public void setKey(){
-//        movieRepository.setKey();
-//    };
+
+    @Override
+    public void setContnets(Long ContentsId, int flag) {
+        Movie movie = movieRepository.findById(ContentsId).get();
+        if(flag==1){
+            movie.setLikelist(movie.getLikelist()+1);
+        }
+        else{
+            movie.setLikelist(movie.getLikelist()-1);
+        }
+        movieRepository.save(movie);
+    }
 
     public Movie getId(Long Id){
         return movieRepository.findByContentsId(Id).get();
+    }
+    public Optional<Movie> gets(Long Id){
+        return movieRepository.findByContentsId(Id);
     }
 }

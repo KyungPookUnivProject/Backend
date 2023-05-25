@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.example.reflix.web.domain.Category;
 import com.example.reflix.web.dto.ReviewResponseDto;
 import com.google.api.services.youtube.model.*;
 import lombok.RequiredArgsConstructor;
@@ -91,7 +93,7 @@ public class YoutubeServiceImpl implements YoutubeService {
 
 
     @Transactional
-    public List<ReviewResponseDto> reviewStartSubmit(String query, Long contentId, int category){
+    public List<ReviewResponseDto> reviewStartSubmit(String query, Long contentId, Category category){
 
         log.info("start youtube"+ query);
         List<ReviewResponseDto> resultlist = new ArrayList<>();
@@ -102,10 +104,10 @@ public class YoutubeServiceImpl implements YoutubeService {
                 String apiKey = YOUTUBE_APIKEY_ENV;
                 search.setKey(apiKey);
                 String prequrey = null;
-                switch (category){
-                    case 0 : prequrey = "영화 "; break;
-                    case 1 : prequrey = "드라마"; break;
-                    case 2 : prequrey = "애니메이션"; break;
+                switch (category.name()){
+                    case "MOVIE" : prequrey = "영화 "; break;
+                    case "DRAMA" : prequrey = "드라마"; break;
+                    case "ANIMATION" : prequrey = "애니메이션"; break;
                 }
                 search.setQ(prequrey+query+" 리뷰");
                 search.setOrder("relevance");
@@ -121,18 +123,20 @@ public class YoutubeServiceImpl implements YoutubeService {
                 List<SearchResult> searchResultList = searchResponse.getItems();
                 if (searchResultList != null) {
                     for (SearchResult rid : searchResultList) {
-                        ReviewResponseDto item = ReviewResponseDto.builder()
-                                .contentId(contentId)
-                                .reviewName(query)
-                                .videoId(rid.getId().getVideoId())
-                                .reviewName(rid.getSnippet().getTitle())
-                                .reviewImageurl(rid.getSnippet().getThumbnails().getHigh().getUrl())
-                                .videoId(GOOGLE_YOUTUBE_URL+rid.getId().getVideoId())
-                                .build();
+                        log.info("나만봐 "+rid.getSnippet().getDescription() + "쿼리 = "+ prequrey);
+                        if(rid.getSnippet().getDescription().contains(prequrey)){
+                            ReviewResponseDto item = ReviewResponseDto.builder()
+                                    .contentId(contentId)
+                                    .reviewName(query)
+                                    .videoId(rid.getId().getVideoId())
+                                    .reviewName(rid.getSnippet().getTitle())
+                                    .reviewImageurl(rid.getSnippet().getThumbnails().getHigh().getUrl())
+                                    .videoId(GOOGLE_YOUTUBE_URL+rid.getId().getVideoId())
+                                    .build();
+                            resultlist.add(item);
+                            log.info("title : "+ item.getReviewName());
+                        }
 
-
-                        resultlist.add(item);
-                        log.info("title : "+ item.getReviewName());
                     }
                     reviewservice.reviewSave(resultlist,category);
                     return resultlist;

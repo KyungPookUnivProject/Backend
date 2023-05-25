@@ -6,19 +6,21 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ContentsDetailDto {
-
+public class ContentsDetailGenreDto {
 
     private Long contentsId;
 
-    private String Name;
+    private String name;
 
-    private String ImageUrl;
+    private String image_url;
 
     private String year;
+
     private Category contentsCategory;
+
 }

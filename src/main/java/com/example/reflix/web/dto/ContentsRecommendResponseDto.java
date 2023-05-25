@@ -18,6 +18,7 @@ public class ContentsRecommendResponseDto {
 
     private String ImageUrl;
 
+    private String year;
     private Category contentsCategory;
     private int Simir = 0;
 

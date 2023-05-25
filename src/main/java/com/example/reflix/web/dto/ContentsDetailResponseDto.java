@@ -33,10 +33,9 @@ public class ContentsDetailResponseDto {
 
     private String story;
 
-//    private contentsJanre janre;
-    private String janre;
+    private List<GenreListResponseDto> genreList;
 
-    private List<contentsKeword> kewordList = new ArrayList<>();
+    private List<KeywordListResponseDto> kewordList;
 
     private List<Review> reviewList = new ArrayList<>();
 

@@ -81,7 +81,32 @@ public class contentsKeword extends BaseTimeEntity {
     private Long movieId;
     private Long tvserisId;
     private Long animationId;
-
+    public String getKeyword(int index) {
+        switch (index) {
+            case 1:
+                return getKeyword1();
+            case 2:
+                return getKeyword2();
+            case 3:
+                return getKeyword3();
+            case 4:
+                return getKeyword4();
+            case 5:
+                return getKeyword5();
+            case 6:
+                return getKeyword6();
+            case 7:
+                return getKeyword7();
+            case 8:
+                return getKeyword8();
+            case 9:
+                return getKeyword9();
+            case 10:
+                return getKeyword10();
+            default:
+                return null;
+        }
+    }
     //한컬럼에 여러키워드 박는다. 구분자를 사용 ex) 사랑,판타지,군대,소총,바다,전쟁
     //인공지능파트랑 협의해봐야됨
 

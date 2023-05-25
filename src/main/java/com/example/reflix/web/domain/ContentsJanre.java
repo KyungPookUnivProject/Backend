@@ -43,4 +43,25 @@ public class ContentsJanre extends BaseTimeEntity {
     private Long tvserisId;
     private Long animationId;
 
+    public String getContentsJarne(int index){
+        switch (index){
+            case 1: return getJanre1();
+            case 2: return getJanre2();
+            case 3: return getJanre3();
+            case 4: return getJanre4();
+            case 5: return getJanre5();
+            default:
+                return null;
+        }
+    }
+
+    public void setContentsJanre(int index){
+        switch (index){
+            case 1: setJanre1(getJanre1());
+            case 2: setJanre2(getJanre2());
+            case 3: setJanre3(getJanre3());
+            case 4: setJanre4(getJanre4());
+            case 5: setJanre5(getJanre5());
+        }
+    }
 }

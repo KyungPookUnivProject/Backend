@@ -19,15 +19,19 @@ public interface MovieRepository extends JpaRepository<Movie,Long> {
 //            "from Movie m where m.contentsId IN :longs")
 //    List<ContentsRecommendResponseDto> findAllBymovieId(Iterable<Long> longs);
 
-    @Query("select new com.example.reflix.web.dto.ContentsRecommendResponseDto(m.contentsId,m.Name,m.ImageUrl,m.contentsCategory,0) " +
+    @Query("select new com.example.reflix.web.dto.ContentsRecommendResponseDto(m.contentsId,m.Name,m.ImageUrl,m.year,m.contentsCategory,0) " +
             "from Movie m where m.contentsId IN :longs and m.year > :startDate and m.year < :endDate")
     List<ContentsRecommendResponseDto> findAllBymovieId(Iterable<Long> longs,String startDate,String endDate);
 
     @Query("select m from Movie m where m.Name like :q")
     List<Movie> findByNameSearch(String q);
 
-    @Query("select m.contentsId from Movie m where m.contentsId>21000")
+    @Query("select m.contentsId from Movie m")
     List<Long> findAllId();
+
+    @Query(value = "select m.contents_id from movie m where m.modified_date > '2023-05-22'",nativeQuery = true)
+    List<Long> findNowId(String date);
+
 
 //    @Query(value = "SET FOREIGN_KEY_CHECKS = 0;",nativeQuery = true)
 //    void setKey();

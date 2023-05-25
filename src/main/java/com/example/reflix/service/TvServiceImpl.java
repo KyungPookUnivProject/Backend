@@ -1,11 +1,9 @@
 package com.example.reflix.service;
 
 import com.example.reflix.config.auth.userAdapter;
-import com.example.reflix.web.domain.Animation;
-import com.example.reflix.web.domain.Tvseris;
+import com.example.reflix.web.domain.*;
 import com.example.reflix.web.domain.repository.ContentsLikeListRepository;
 import com.example.reflix.web.domain.repository.TvRepository;
-import com.example.reflix.web.domain.Movie;
 import com.example.reflix.web.dto.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -22,7 +21,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Log4j2
-public class TvService implements contentsService{
+public class TvServiceImpl implements contentsService{
 
     private final TvRepository TvRepository;
     private final ContentsLikeListRepository contentsLikeListRepository;
@@ -31,8 +30,33 @@ public class TvService implements contentsService{
     @Override
     @Transactional
     public ContentsDetailResponseDto contentdetail(Long contentId){
-        Movie contents = TvRepository.findByContentsId(contentId);
-        Long likelist = contentsLikeListRepository.countByContentId(contentId);
+        Tvseris contents = TvRepository.findByContentsId(contentId);
+//        Long likelist = contentsLikeListRepository.countByContentId(contentId);
+        Long likelist = Long.valueOf(contents.getLikelist());
+        ContentsJanre janre = contents.getJanre();
+        contentsKeword keword = contents.getKewordList();
+        List<GenreListResponseDto> JanreList = new LinkedList<>();
+        List<KeywordListResponseDto> KeywordList = new LinkedList<>();
+
+        for (int i = 1; i <= 5; i++) {
+            String jarne = janre.getContentsJarne(i);
+            if (jarne != null) {
+                JanreList.add(new GenreListResponseDto(jarne));
+            }
+            else{
+                break;
+            }
+        }
+
+        for (int i = 1; i <= 10; i++) {
+            String keyword = keword.getKeyword(i);
+            if (keyword != null) {
+                KeywordList.add(new KeywordListResponseDto(keyword));
+            }
+            else{
+                break;
+            }
+        }
         ContentsDetailResponseDto resultdto = ContentsDetailResponseDto.builder()
                 .contentImageUrl(contents.getImageUrl())
                 .contentName(contents.getName())
@@ -40,9 +64,11 @@ public class TvService implements contentsService{
                 .contentsCategory(contents.getContentsCategory())
                 .year(contents.getYear())
                 .grade(contents.getGrade())
-                .janre(contents.getJanre().getJanre1())
+                .genreList(JanreList)
+                .kewordList(KeywordList)
                 .story(contents.getStory())
                 .likelist(likelist)
+                .runnigTime(contents.getRunnigTime())
                 .build();
         return resultdto;
     }
@@ -57,8 +83,8 @@ public class TvService implements contentsService{
         List<String> pyrequestList = new ArrayList<>();
         pyrequestList.add(command);
         pyrequestList.add(arg1);
-        pyrequestList.add(contentFavoriteDto.getJangre());
-        pyrequestList.add(contentFavoriteDto.getKeword());
+        pyrequestList.add(contentFavoriteDto.getGenreAsString());
+        pyrequestList.add(contentFavoriteDto.getKeywordAsString());
         String contentString= contentsService.pythonEexc(pyrequestList);
         if(contentString!=null){
             ObjectMapper mapper = new ObjectMapper();
@@ -68,7 +94,7 @@ public class TvService implements contentsService{
                 idlist.add(dto.getTmdbId());
             }
 
-            int IntstartDate = Integer.parseInt(contentFavoriteDto.getYear().toString().substring(0,4));
+            int IntstartDate = Integer.parseInt(contentFavoriteDto.getYear().toString().substring(1,5));
             int IntendDate = IntstartDate+10;
             String startDate = String.valueOf(IntstartDate)+"-01-01";
             String endDate = String.valueOf(IntendDate)+"-01-01";
@@ -80,50 +106,13 @@ public class TvService implements contentsService{
             for(int i=0;i<contentsList.size();i++){
                 contentsList.get(i).setSimir(90);
             }
-            contentsService.recomendContentsSave(contentsList,userPrincipal.getId());
+//            contentsService.recomendContentsSave(contentsList,userPrincipal.getId());
             return contentsList;
         }
         else{
             return contentsList;
         }
     }
-//
-//    @Transactional
-//    @Override
-//    public List<ContentsRecommendResponseDto> submit(ContentsFavoriteRequestDto contentFavoriteDto, userAdapter userPrincipal) throws IOException {
-//        String command = "python3";
-//        String arg1 = "/Users/gimjingwon/PycharmProjects/pythonProject1/Json_sample.py";
-//        List<ContentsRecommendResponseDto> contentsList= new ArrayList<>();
-//        List<String> pyrequestList = new ArrayList<>();
-//        pyrequestList.add(command);
-//        pyrequestList.add(arg1);
-////        pyrequestList.add(contentFavoriteDto.getContentVariation());
-////        pyrequestList.add(contentFavoriteDto.getJangre());
-////        pyrequestList.add(contentFavoriteDto.getKeword());
-////        pyrequestList.add(contentFavoriteDto.getYear());
-//        String contentString= contentsService.pythonEexc(pyrequestList);
-//        log.info(contentString);
-//        if(!contentString.isEmpty()){
-//            ObjectMapper mapper = new ObjectMapper();
-//            List<Long> idlist = new ArrayList<>();
-//            List<SimilarContentsDto> list = Arrays.asList(mapper.readValue(contentString, SimilarContentsDto[].class));
-//            for(SimilarContentsDto dto : list){
-//                idlist.add(dto.getTmdbId());
-//            }
-//            contentsList = TvRepository.findAllByTvId(idlist);
-//            for(int i=0;i<contentsList.size();i++){
-//                contentsList.get(i).setSimir(80);
-//
-////                contentsList.get(i).setSimir(list.get(i).getSimilarity());
-//            }
-//            contentsService.recomendContentsSave(contentsList,userPrincipal.getId());
-//            return contentsList;
-//        }
-//        else{
-//            return contentsList;
-//        }
-//    }
-
     @Override
     @Transactional
     public List<ContentsDetailDto> search(String q){
@@ -136,8 +125,8 @@ public class TvService implements contentsService{
         for(Tvseris rid : list){
             ContentsDetailDto dto  = ContentsDetailDto.builder()
                     .contentsId(rid.getContentsId())
-                    .contentName(rid.getName())
-                    .contentImageUrl(rid.getImageUrl())
+                    .Name(rid.getName())
+                    .ImageUrl(rid.getImageUrl())
                     .contentsCategory(rid.getContentsCategory())
                     .year(rid.getYear()).build();
             resultList.add(dto);
@@ -145,7 +134,35 @@ public class TvService implements contentsService{
         return resultList;
     }
 
+
+    @Override
+    public void setContnets(Long ContentsId,int flag) {
+        Tvseris movie = TvRepository.findById(ContentsId).get();
+        if(flag == 1){
+            movie.setLikelist(movie.getLikelist()+1);
+
+        }else{
+            movie.setLikelist(movie.getLikelist()-1);
+
+        }
+        TvRepository.save(movie);
+    }
+
     public List<Tvseris> getAll(List<Long> idList){
         return TvRepository.findAllById(idList);
+    }
+
+
+    public List<Long> now(){
+        LocalDateTime dateTime;
+        return TvRepository.findNowId("2023-05-23");
+    }
+
+    @Transactional
+    public void save(Tvseris tv){
+        TvRepository.save(tv);
+    }
+    public List<Long> getIdlist(){
+        return TvRepository.findAllId();
     }
 }
